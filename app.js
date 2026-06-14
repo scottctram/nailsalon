@@ -6,7 +6,8 @@ const SERVICES = {
     'Gel Manicure': 45, 
     'Pedicure': 60, 
     'Acrylic Full Set': 90, 
-    'Nail Art Removal': 15 
+    'Nail Art Removal': 15,
+    'Other (Custom)': 0 
 };
 const STAFF_MEMBERS = ['Alice', 'Bella', 'Chloe', 'Diana'];
 const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
@@ -35,6 +36,8 @@ const timeColumn = document.getElementById('timeColumn');
 const staffTrackContainer = document.getElementById('staffTrackContainer');
 const calendarScrollWindow = document.getElementById('calendarScrollWindow');
 const notesInput = document.getElementById('notes');
+const customDurationGroup = document.getElementById('customDurationGroup');
+const customDurationInput = document.getElementById('customDuration');
 
 // Authentication DOM Intercept elements
 const loginForm = document.getElementById('loginForm');
@@ -66,7 +69,10 @@ function initFormElements() {
 
 // Calculate Accurate Service End Boundary Windows
 function calculateEndTime(start, serviceName) {
-    const duration = SERVICES[serviceName];
+    const duration = serviceName === 'Other (Custom)' 
+        ? (parseInt(customDurationInput.value) || 0) 
+        : SERVICES[serviceName];
+        
     const [hours, minutes] = start.split(':').map(Number);
     const total = hours * 60 + minutes + duration;
     return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}`;
@@ -295,11 +301,19 @@ deleteBtn.addEventListener('click', async function() {
 
 cancelEditBtn.addEventListener('click', resetForm);
 
-[dateInput, staffSelect, serviceSelect, startTimeInput].forEach(el => el.addEventListener('change', () => { 
+[dateInput, staffSelect, serviceSelect, startTimeInput, customDurationInput].forEach(el => el.addEventListener('change', () => { 
     forceConfirmActive = false; 
+    if (serviceSelect.value === 'Other (Custom)') {
+        customDurationGroup.style.display = 'block';
+    } else {
+        customDurationGroup.style.display = 'none';
+    }
+    
     renderCalendarGrid(); 
     updateFormUI(); 
 }));
+
+customDurationInput.addEventListener('input', updateFormUI);
 
 window.addEventListener('load', () => { 
     initSupabase();
