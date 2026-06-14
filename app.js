@@ -9,7 +9,7 @@ const SERVICES = {
     'Nail Art Removal': 15 
 };
 const STAFF_MEMBERS = ['Alice', 'Bella', 'Chloe', 'Diana'];
-const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
 const START_HOUR = 9;
 
 // State Memory Cache
@@ -304,7 +304,7 @@ cancelEditBtn.addEventListener('click', resetForm);
 window.addEventListener('load', () => { 
     initSupabase();
     const now = new Date();
-    if (now.getHours() >= START_HOUR && now.getHours() < 18) {
+    if (now.getHours() >= START_HOUR && now.getHours() < 22) {
         calendarScrollWindow.scrollTop = (now.getHours() - START_HOUR) * 60 + now.getMinutes() - 40;
     }
 });
