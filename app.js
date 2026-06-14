@@ -1,6 +1,3 @@
-// ==========================================
-// ⚠️ PASTE YOUR SECURE CLOUD KEYS RIGHT HERE
-// ==========================================
 const SUPABASE_URL = 'https://rdfxkunntwffxibaoqnk.supabase.co'; 
 const SUPABASE_ANON_KEY = 'sb_publishable_lYXIa2nPYnpn6CGpPHNVEw_yDOp0P13';
 
