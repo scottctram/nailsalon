@@ -31,6 +31,7 @@ const calendarHeader = document.getElementById('calendarHeader');
 const timeColumn = document.getElementById('timeColumn');
 const staffTrackContainer = document.getElementById('staffTrackContainer');
 const calendarScrollWindow = document.getElementById('calendarScrollWindow');
+const notesInput = document.getElementById('notes');
 
 // Initialize Dynamic HTML Dropdowns & Matrix Columns
 function initFormElements() {
@@ -66,8 +67,13 @@ function checkConflict() {
 
     return appointments.some(appt => {
         if (appt.date !== currentDate || appt.staff !== currentStaff) return false;
-        const existStart = parseFloat(appt.startTime.split(':')[0]) + parseFloat(appt.startTime.split(':')[1]) / 60;
-        const existEnd = parseFloat(appt.endTime.split(':')[0]) + parseFloat(appt.endTime.split(':')[1]) / 60;
+        
+        // Dynamic reading support matching either historical local structure or Postgres snake_case maps
+        const rawStart = appt.start_time || appt.startTime;
+        const rawEnd = appt.end_time || appt.endTime;
+        
+        const existStart = parseFloat(rawStart.split(':')[0]) + parseFloat(rawStart.split(':')[1]) / 60;
+        const existEnd = parseFloat(rawEnd.split(':')[0]) + parseFloat(rawEnd.split(':')[1]) / 60;
         return newStart < existEnd && newEnd > existStart;
     });
 }
@@ -97,14 +103,25 @@ function renderCalendarGrid() {
     STAFF_MEMBERS.forEach(staffName => {
         const columnTrack = document.createElement('div');
         columnTrack.className = 'staff-column';
+        
         appointments.filter(a => a.date === dateInput.value && a.staff === staffName).forEach(appt => {
-            const [stH, stM] = appt.startTime.split(':').map(Number);
-            const [endH, endM] = appt.endTime.split(':').map(Number);
+            const rawStart = appt.start_time || appt.startTime;
+            const rawEnd = appt.end_time || appt.endTime;
+
+            const [stH, stM] = rawStart.split(':').map(Number);
+            const [endH, endM] = rawEnd.split(':').map(Number);
+            
             const block = document.createElement('div');
             block.className = 'appointment-block';
             block.style.top = `${(stH - START_HOUR) * 60 + stM}px`;
             block.style.height = `${(endH - stH) * 60 + (endM - stM)}px`;
-            block.innerHTML = `<strong>${appt.customer}</strong><br>${appt.service}<br>${appt.startTime}-${appt.endTime}`;
+            
+            block.innerHTML = `
+                <div style="font-weight: 700; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${appt.customer}</div>
+                <div style="opacity: 0.95; font-size: 0.88em; font-weight: 500;">${appt.service}</div>
+                <div style="font-size: 0.78em; margin-top: 2px; font-weight: bold; opacity: 0.8;">${rawStart} - ${rawEnd}</div>
+                ${appt.notes ? `<div class="appointment-notes" title="${appt.notes}">📝 ${appt.notes}</div>` : ''}
+            `;
             columnTrack.appendChild(block);
         });
         staffTrackContainer.appendChild(columnTrack);
@@ -140,8 +157,9 @@ form.addEventListener('submit', async function(e) {
         customer: customerInput.value,
         staff: staffSelect.value,
         service: serviceSelect.value,
-        startTime: startTimeInput.value,
-        endTime: calculateEndTime(startTimeInput.value, serviceSelect.value)
+        start_time: startTimeInput.value,
+        end_time: calculateEndTime(startTimeInput.value, serviceSelect.value),
+        notes: notesInput.value
     };
 
     submitBtn.textContent = 'Saving...';
@@ -149,9 +167,11 @@ form.addEventListener('submit', async function(e) {
 
     if (error) {
         alert('Database Write Error: ' + error.message);
+        updateFormUI();
     } else {
         appointments.push(data[0]);
         customerInput.value = '';
+        if (notesInput) notesInput.value = '';
         forceConfirmActive = false;
         renderCalendarGrid();
         updateFormUI();
