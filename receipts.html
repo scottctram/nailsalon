@@ -141,6 +141,12 @@
             <div class="sidebar-panel">
                 <h3>Calculate Invoice</h3>
                 <form id="receiptForm">
+                    
+                    <div class="form-group">
+                        <label for="servicedBy">Serviced By (Technician)</label>
+                        <select id="servicedBy" class="form-control"></select>
+                    </div>
+
                     <fieldset class="fieldset">
                         <legend>Select an Item</legend>
                         <div class="radio-group">
@@ -182,7 +188,8 @@
                 <div id="receiptBox" class="receipt" style="display: none;">
                     <div class="receipt-header">
                         <h3>STORE RECEIPT</h3>
-                        <div id="receiptDate" style="font-size: 0.85em; color: #333;"></div>
+                        <div id="receiptDate" style="font-size: 0.85em; color: #333; margin-bottom: 4px;"></div>
+                        <div id="receiptStaff" style="font-size: 0.85em; font-weight: bold; color: #4F46E5; display: none;"></div>
                     </div>
                     
                     <div id="receiptItems"></div>
@@ -203,10 +210,12 @@
         const SUPABASE_ANON_KEY = 'sb_publishable_lYXIa2nPYnpn6CGpPHNVEw_yDOp0P13';
         
         const HST_RATE = 0.13;
+        const STAFF_MEMBERS = ['Alice', 'Bella', 'Chloe', 'Diana'];
         let supabaseClient = null;
 
         // Form DOM selectors
         const receiptForm = document.getElementById('receiptForm');
+        const servicedBySelect = document.getElementById('servicedBy');
         const miscInput = document.getElementById('miscInput');
         const submitBtn = document.getElementById('submitBtn');
         const receiptBox = document.getElementById('receiptBox');
@@ -221,6 +230,17 @@
         const loginError = document.getElementById('loginError');
         const logoutBtn = document.getElementById('logoutBtn');
 
+        function initFormElements() {
+            servicedBySelect.innerHTML = '';
+            
+            // Add a blank conditional choice placeholder right at the top
+            servicedBySelect.appendChild(new Option("Select Technician (Optional)", ""));
+            
+            STAFF_MEMBERS.forEach(staff => {
+                servicedBySelect.appendChild(new Option(staff, staff));
+            });
+        }
+
         async function initSupabase() {
             supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             const { data: { session } } = await supabaseClient.auth.getSession();
@@ -231,6 +251,7 @@
             loginOverlay.style.display = 'none';
             appWorkspace.style.opacity = '1';
             appWorkspace.style.pointerEvents = 'auto';
+            initFormElements();
         }
 
         function showLogin() {
@@ -265,6 +286,9 @@
 
             const selectedProduct = document.querySelector('input[name="product"]:checked');
             const selectedService = document.querySelector('input[name="service"]:checked');
+            
+            // If the user selected the blank option, chosenStaff becomes an empty string, which saves as NULL
+            const chosenStaff = servicedBySelect.value || null;
 
             const pName = selectedProduct.value;
             const pPrice = parseFloat(selectedProduct.getAttribute('data-price'));
@@ -278,7 +302,6 @@
             const tax = subtotal * HST_RATE;
             const total = subtotal + tax;
 
-            // Database insertion payload object maps directly to column structures
             const receiptPayload = {
                 product_name: pName,
                 product_price: pPrice,
@@ -287,7 +310,8 @@
                 misc_price: mPrice,
                 subtotal: subtotal,
                 tax: tax,
-                total: total
+                total: total,
+                serviced_by: chosenStaff
             };
 
             const { data, error } = await supabaseClient.from('receipts').insert([receiptPayload]).select();
@@ -296,8 +320,17 @@
                 alert('Cloud Storage Write Error: ' + error.message);
                 submitBtn.textContent = 'Generate & Save Receipt';
             } else {
-                // Paint invoice canvas blocks onto the DOM UI layer
+                // Paint invoice details onto preview elements
                 document.getElementById('receiptDate').innerText = new Date(data[0].created_at).toLocaleString();
+                
+                // Toggle display depending on whether serviced_by contains data or is null
+                const staffDisplay = document.getElementById('receiptStaff');
+                if (data[0].serviced_by) {
+                    staffDisplay.innerText = `SERVICED BY: ${data[0].serviced_by}`;
+                    staffDisplay.style.display = 'block';
+                } else {
+                    staffDisplay.style.display = 'none';
+                }
                 
                 let itemsHTML = `
                     <div class="receipt-row"><span>${pName}</span><span>$${pPrice.toFixed(2)}</span></div>
