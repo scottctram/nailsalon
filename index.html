@@ -64,6 +64,12 @@
                         <label for="service">Select Treatment Block</label>
                         <select id="service" class="form-control"></select>
                     </div>
+
+                    <div class="form-group" id="customDurationGroup" style="display: none; background-color: #f8fafc; padding: 12px; border-radius: 6px; border: 1px solid #e2e8f0;">
+                        <label for="customDuration">Custom Service Duration (Minutes)</label>
+                        <input type="number" id="customDuration" class="form-control" min="1" max="300" placeholder="e.g. 20, 40, 120" value="30">
+                    </div>
+                    
                     <div class="form-group">
                         <label for="startTime">Target Start Time (09:00 - 17:00)</label>
                         <input type="time" id="startTime" class="form-control" required value="10:00">
