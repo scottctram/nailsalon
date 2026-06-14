@@ -55,7 +55,11 @@
                 <div id="durationPreview" class="preview-box"></div>
                 <div id="warningBanner" class="warning-banner" style="display: none;"></div>
 
-                <button type="submit" id="submitBtn" class="btn-submit btn-normal">Connecting Database...</button>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button type="submit" id="submitBtn" class="btn-submit btn-normal">Connecting Database...</button>
+                    <button type="button" id="deleteBtn" class="btn-submit btn-warning-state" style="display: none; background-color: #dc2626;">Delete Appointment</button>
+                    <button type="button" id="cancelEditBtn" style="display: none; background: none; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 500; color: #64748b;">Cancel Editing</button>
+                </div>
             </form>
         </div>
 
