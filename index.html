@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Nail Salon Staff Dashboard</title>
+    
+    <link rel="stylesheet" href="style.css">
+    
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+</head>
+<body>
+
+    <header>
+        <h1>Salon Desk Admin Matrix</h1>
+        <p>Live Connected Cloud Dashboard — Advanced Multi-Date Call Matrix Verification</p>
+    </header>
+
+    <div class="app-layout">
+        
+        <div class="sidebar-panel">
+            <h3>Log Phone Booking</h3>
+            <form id="bookingForm">
+                
+                <div class="form-group">
+                    <label for="appointmentDate">Appointment Date</label>
+                    <input type="date" id="appointmentDate" class="form-control" required>
+                </div>
+
+                <div class="form-group">
+                    <label for="customer">Customer Name</label>
+                    <input type="text" id="customer" class="form-control" required placeholder="e.g. Jessica Lin">
+                </div>
+
+                <div class="form-group">
+                    <label for="staff">Assign Technician</label>
+                    <select id="staff" class="form-control"></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="service">Select Treatment Block</label>
+                    <select id="service" class="form-control"></select>
+                </div>
+
+                <div class="form-group">
+                    <label for="startTime">Target Start Time (09:00 - 17:00)</label>
+                    <input type="time" id="startTime" class="form-control" required value="10:00">
+                </div>
+
+                <div id="durationPreview" class="preview-box"></div>
+                <div id="warningBanner" class="warning-banner" style="display: none;"></div>
+
+                <button type="submit" id="submitBtn" class="btn-submit btn-normal">Connecting Database...</button>
+            </form>
+        </div>
+
+        <div class="calendar-container">
+            <div id="calendarHeader" class="calendar-header">
+                <div class="header-cell" style="font-size: 0.85em;">Timeline</div>
+                </div>
+
+            <div id="calendarScrollWindow" class="calendar-scroll-window">
+                <div class="calendar-body">
+                    <div id="timeColumn" class="time-column"></div>
+                    
+                    <div id="staffTrackContainer" style="display: contents;"></div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
