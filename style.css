@@ -161,7 +161,7 @@ header p {
     display: grid; 
     grid-template-columns: 80px repeat(4, minmax(120px, 1fr));
     position: relative; 
-    height: 540px; 
+    height: 720px; 
     background-image: linear-gradient(#e2e8f0 1px, transparent 1px); 
     background-size: 100% 60px; 
 }
