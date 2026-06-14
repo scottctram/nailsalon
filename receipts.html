@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Salon Portal - HST Receipt Generator</title>
+    
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+        /* Shared Salon Aesthetic Design Patterns */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background-color: #faf9f6;
+            color: #1e293b;
+        }
+        header {
+            margin-bottom: 24px;
+            border-bottom: 1px solid #e2e8f0;
+            padding-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
+        
+        .nav-links a {
+            color: #4F46E5;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.95rem;
+            margin-right: 20px;
+        }
+        .nav-links a:hover { text-decoration: underline; }
+
+        .app-layout {
+            display: grid;
+            grid-template-columns: 400px 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .sidebar-panel {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            padding: 24px;
+        }
+        .sidebar-panel h3 {
+            margin-top: 0; margin-bottom: 20px; font-size: 1.2rem;
+            color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px;
+        }
+
+        .fieldset {
+            border: 1px solid #e2e8f0;
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        legend { font-weight: 600; padding: 0 8px; color: #475569; font-size: 0.9rem; }
+
+        .radio-group {
+            margin: 10px 0;
+            display: flex;
+            align-items: center;
+        }
+        .radio-group input {
+            margin-right: 10px; width: 16px; height: 16px; cursor: pointer;
+        }
+        .radio-group label { cursor: pointer; color: #334155; font-size: 0.95rem; }
+
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #475569; font-size: 0.9rem; }
+        .form-control { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 0.95rem; }
+
+        .btn-submit { width: 100%; padding: 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; transition: background 0.2s; }
+        .btn-normal { background-color: #4F46E5; color: #ffffff; }
+        .btn-normal:hover { background-color: #4338ca; }
+
+        /* Receipt Canvas Rendering */
+        .receipt-container {
+            background: #ffffff;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            padding: 24px;
+        }
+        .receipt {
+            font-family: 'Courier New', Courier, monospace;
+            border: 1px dashed #0f172a;
+            padding: 24px;
+            background: #fffef9;
+            color: #000;
+            max-width: 450px;
+            margin: 0 auto;
+        }
+        .receipt-header {
+            text-align: center;
+            border-bottom: 1px dashed #000;
+            padding-bottom: 12px;
+            margin-bottom: 16px;
+        }
+        .receipt-header h3 { margin: 0 0 4px 0; letter-spacing: 1px; }
+        .receipt-row { display: flex; justify-content: space-between; margin: 8px 0; }
+        .divider { border-top: 1px dashed #000; margin: 12px 0; }
+        .total-row { font-weight: bold; font-size: 1.15em; }
+        
+        .placeholder { color: #64748b; text-align: center; padding: 60px 0; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #faf9f6; display: flex; justify-content: center; align-items: center; z-index: 9999;">
+        <div style="background: white; padding: 32px; border-radius: 12px; border: 1px solid #e2e8f0; width: 340px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);">
+            <h2 style="margin-top: 0; margin-bottom: 6px; color: #0f172a;">Salon Receipts</h2>
+            <p style="margin: 0 0 20px 0; color: #64748b; font-size: 0.9rem;">Sign in to access point-of-sale tool.</p>
+            <form id="loginForm">
+                <div class="form-group"><label>Email Address</label><input type="email" id="loginEmail" class="form-control" required></div>
+                <div class="form-group" style="margin-bottom: 20px;"><label>Password</label><input type="password" id="loginPassword" class="form-control" required></div>
+                <button type="submit" id="loginBtn" class="btn-submit btn-normal">Sign In</button>
+                <div id="loginError" style="color: #dc2626; font-size: 0.85rem; margin-top: 12px; text-align: center; display: none; font-weight: 500;"></div>
+            </form>
+        </div>
+    </div>
+
+    <div id="appWorkspace" style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+        <header>
+            <div>
+                <h1>POS Receipt Manager</h1>
+                <div class="nav-links" style="margin-top: 6px;">
+                    <a href="index.html">← Back to Appointment Grid</a>
+                </div>
+            </div>
+            <button id="logoutBtn" style="background: none; border: 1px solid #dc2626; color: #dc2626; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Sign Out</button>
+        </header>
+
+        <div class="app-layout">
+            <div class="sidebar-panel">
+                <h3>Calculate Invoice</h3>
+                <form id="receiptForm">
+                    <fieldset class="fieldset">
+                        <legend>Select an Item</legend>
+                        <div class="radio-group">
+                            <input type="radio" id="item1" name="product" value="Widget A" data-price="25.00" checked>
+                            <label for="item1">Widget A ($25.00)</label>
+                        </div>
+                        <div class="radio-group">
+                            <input type="radio" id="item2" name="product" value="Widget B" data-price="60.00">
+                            <label for="item2">Widget B ($60.00)</label>
+                        </div>
+                        <div class="radio-group">
+                            <input type="radio" id="item3" name="product" value="Widget C" data-price="120.00">
+                            <label for="item3">Widget C ($120.00)</label>
+                        </div>
+                    </fieldset>
+
+                    <fieldset class="fieldset">
+                        <legend>Service Type</legend>
+                        <div class="radio-group">
+                            <input type="radio" id="service1" name="service" value="Regular Service" data-price="10.00" checked>
+                            <label for="service1">Regular ($10.00)</label>
+                        </div>
+                        <div class="radio-group">
+                            <input type="radio" id="service2" name="service" value="Priority Service" data-price="35.00">
+                            <label for="service2">Priority ($35.00)</label>
+                        </div>
+                    </fieldset>
+
+                    <div class="form-group">
+                        <label for="miscInput">Miscellaneous Amount ($)</label>
+                        <input type="number" id="miscInput" class="form-control" min="0" step="0.01" placeholder="0.00">
+                    </div>
+                    
+                    <button type="submit" id="submitBtn" class="btn-submit btn-normal">Generate & Save Receipt</button>
+                </form>
+            </div>
+
+            <div class="receipt-container">
+                <div id="receiptBox" class="receipt" style="display: none;">
+                    <div class="receipt-header">
+                        <h3>STORE RECEIPT</h3>
+                        <div id="receiptDate" style="font-size: 0.85em; color: #333;"></div>
+                    </div>
+                    
+                    <div id="receiptItems"></div>
+                    <div class="divider"></div>
+                    
+                    <div class="receipt-row"><span>SUBTOTAL:</span><span id="receiptSubtotal">$0.00</span></div>
+                    <div class="receipt-row"><span>HST (13%):</span><span id="receiptTax">$0.00</span></div>
+                    <div class="divider"></div>
+                    <div class="receipt-row total-row"><span>TOTAL:</span><span id="receiptTotal">$0.00</span></div>
+                </div>
+                <p id="placeholderText" class="placeholder">Complete details on the form to issue a live invoice tracking receipt block.</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const SUPABASE_URL = 'https://rdfxkunntwffxibaoqnk.supabase.co'; 
+        const SUPABASE_ANON_KEY = 'sb_publishable_lYXIa2nPYnpn6CGpPHNVEw_yDOp0P13';
+        
+        const HST_RATE = 0.13;
+        let supabaseClient = null;
+
+        // Form DOM selectors
+        const receiptForm = document.getElementById('receiptForm');
+        const miscInput = document.getElementById('miscInput');
+        const submitBtn = document.getElementById('submitBtn');
+        const receiptBox = document.getElementById('receiptBox');
+        const placeholderText = document.getElementById('placeholderText');
+
+        // Auth DOM selectors
+        const loginForm = document.getElementById('loginForm');
+        const loginEmail = document.getElementById('loginEmail');
+        const loginPassword = document.getElementById('loginPassword');
+        const loginOverlay = document.getElementById('loginOverlay');
+        const appWorkspace = document.getElementById('appWorkspace');
+        const loginError = document.getElementById('loginError');
+        const logoutBtn = document.getElementById('logoutBtn');
+
+        async function initSupabase() {
+            supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            if (session) { showDashboard(); } else { showLogin(); }
+        }
+
+        function showDashboard() {
+            loginOverlay.style.display = 'none';
+            appWorkspace.style.opacity = '1';
+            appWorkspace.style.pointerEvents = 'auto';
+        }
+
+        function showLogin() {
+            loginOverlay.style.display = 'flex';
+            appWorkspace.style.opacity = '0';
+            appWorkspace.style.pointerEvents = 'none';
+        }
+
+        // Auth listeners
+        loginForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            loginBtn.textContent = 'Verifying...';
+            const { error } = await supabaseClient.auth.signInWithPassword({ email: loginEmail.value, password: loginPassword.value });
+            if (error) {
+                loginError.textContent = `❌ ${error.message}`;
+                loginError.style.display = 'block';
+                loginBtn.textContent = 'Sign In';
+            } else {
+                showDashboard();
+            }
+        });
+
+        logoutBtn.addEventListener('click', async function() {
+            await supabaseClient.auth.signOut();
+            showLogin();
+        });
+
+        // POS transactional calculation logic loop
+        receiptForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            submitBtn.textContent = 'Processing and Syncing...';
+
+            const selectedProduct = document.querySelector('input[name="product"]:checked');
+            const selectedService = document.querySelector('input[name="service"]:checked');
+
+            const pName = selectedProduct.value;
+            const pPrice = parseFloat(selectedProduct.getAttribute('data-price'));
+            
+            const sName = selectedService.value;
+            const sPrice = parseFloat(selectedService.getAttribute('data-price'));
+            
+            const mPrice = parseFloat(miscInput.value) || 0.00;
+
+            const subtotal = pPrice + sPrice + mPrice;
+            const tax = subtotal * HST_RATE;
+            const total = subtotal + tax;
+
+            // Database insertion payload object maps directly to column structures
+            const receiptPayload = {
+                product_name: pName,
+                product_price: pPrice,
+                service_name: sName,
+                service_price: sPrice,
+                misc_price: mPrice,
+                subtotal: subtotal,
+                tax: tax,
+                total: total
+            };
+
+            const { data, error } = await supabaseClient.from('receipts').insert([receiptPayload]).select();
+
+            if (error) {
+                alert('Cloud Storage Write Error: ' + error.message);
+                submitBtn.textContent = 'Generate & Save Receipt';
+            } else {
+                // Paint invoice canvas blocks onto the DOM UI layer
+                document.getElementById('receiptDate').innerText = new Date(data[0].created_at).toLocaleString();
+                
+                let itemsHTML = `
+                    <div class="receipt-row"><span>${pName}</span><span>$${pPrice.toFixed(2)}</span></div>
+                    <div class="receipt-row"><span>${sName}</span><span>$${sPrice.toFixed(2)}</span></div>
+                `;
+                if (mPrice > 0) {
+                    itemsHTML += `<div class="receipt-row"><span>Misc Amount</span><span>$${mPrice.toFixed(2)}</span></div>`;
+                }
+                
+                document.getElementById('receiptItems').innerHTML = itemsHTML;
+                document.getElementById('receiptSubtotal').innerText = `$${subtotal.toFixed(2)}`;
+                document.getElementById('receiptTax').innerText = `$${tax.toFixed(2)}`;
+                document.getElementById('receiptTotal').innerText = `$${total.toFixed(2)}`;
+
+                placeholderText.style.display = 'none';
+                receiptBox.style.display = 'block';
+                submitBtn.textContent = 'Generate & Save Receipt';
+                miscInput.value = '';
+            }
+        });
+
+        window.addEventListener('load', initSupabase);
+    </script>
+</body>
+</html>
