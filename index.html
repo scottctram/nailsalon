@@ -11,72 +11,87 @@
 </head>
 <body>
 
-    <header>
-        <h1>Salon Desk Admin Matrix</h1>
-        <p>Live Connected Cloud Dashboard — Advanced Multi-Date Call Matrix Verification</p>
-    </header>
-
-    <div class="app-layout">
-        
-        <div class="sidebar-panel">
-            <h3>Log Phone Booking</h3>
-            <form id="bookingForm">
-                
+    <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #faf9f6; display: flex; justify-content: center; align-items: center; z-index: 9999;">
+        <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 340px;">
+            <h2 style="margin-top: 0; margin-bottom: 6px; color: #0f172a;">Salon Portal</h2>
+            <p style="margin: 0 0 20px 0; color: #64748b; font-size: 0.9rem;">Please sign in to access the desk matrix.</p>
+            
+            <form id="loginForm">
                 <div class="form-group">
-                    <label for="appointmentDate">Appointment Date</label>
-                    <input type="date" id="appointmentDate" class="form-control" required>
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" class="form-control" required placeholder="name@email.com">
                 </div>
-
-                <div class="form-group">
-                    <label for="customer">Customer Name</label>
-                    <input type="text" id="customer" class="form-control" required placeholder="e.g. Jessica Lin">
+                <div class="form-group" style="margin-bottom: 20px;">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••">
                 </div>
-
-                <div class="form-group">
-                    <label for="notes">Appointment Notes (Optional)</label>
-                    <textarea id="notes" class="form-control" rows="3" placeholder="e.g., Phone #, Wants chrome finish, allergy to acetone, etc."></textarea>
-                </div>
-
-                <div class="form-group">
-                    <label for="staff">Assign Technician</label>
-                    <select id="staff" class="form-control"></select>
-                </div>
-
-                <div class="form-group">
-                    <label for="service">Select Treatment Block</label>
-                    <select id="service" class="form-control"></select>
-                </div>
-
-                <div class="form-group">
-                    <label for="startTime">Target Start Time (09:00 - 17:00)</label>
-                    <input type="time" id="startTime" class="form-control" required value="10:00">
-                </div>
-
-                <div id="durationPreview" class="preview-box"></div>
-                <div id="warningBanner" class="warning-banner" style="display: none;"></div>
-
-                <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button type="submit" id="submitBtn" class="btn-submit btn-normal">Connecting Database...</button>
-                    <button type="button" id="deleteBtn" class="btn-submit btn-warning-state" style="display: none; background-color: #dc2626;">Delete Appointment</button>
-                    <button type="button" id="cancelEditBtn" style="display: none; background: none; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 500; color: #64748b;">Cancel Editing</button>
-                </div>
+                <button type="submit" id="loginBtn" class="btn-submit btn-normal">Sign In</button>
+                <div id="loginError" style="color: #dc2626; font-size: 0.85rem; margin-top: 12px; text-align: center; display: none; font-weight: 500;"></div>
             </form>
         </div>
+    </div>
 
-        <div class="calendar-container">
-            <div id="calendarHeader" class="calendar-header">
-                <div class="header-cell" style="font-size: 0.85em;">Timeline</div>
+    <div id="appWorkspace" style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
+        <header style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1>Salon Desk Admin Matrix</h1>
+                <p>Live Connected Cloud Dashboard — Secure Authorized Access Only</p>
+            </div>
+            <button id="logoutBtn" style="background: none; border: 1px solid #dc2626; color: #dc2626; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Sign Out</button>
+        </header>
+
+        <div class="app-layout">
+            <div class="sidebar-panel">
+                <h3>Log Phone Booking</h3>
+                <form id="bookingForm">
+                    <div class="form-group">
+                        <label for="appointmentDate">Appointment Date</label>
+                        <input type="date" id="appointmentDate" class="form-control" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="customer">Customer Name</label>
+                        <input type="text" id="customer" class="form-control" required placeholder="e.g. Jessica Lin">
+                    </div>
+                    <div class="form-group">
+                        <label for="notes">Appointment Notes (Optional)</label>
+                        <textarea id="notes" class="form-control" rows="3" placeholder="e.g., Phone #, Wants chrome finish, allergy to acetone, etc."></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label for="staff">Assign Technician</label>
+                        <select id="staff" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="service">Select Treatment Block</label>
+                        <select id="service" class="form-control"></select>
+                    </div>
+                    <div class="form-group">
+                        <label for="startTime">Target Start Time (09:00 - 17:00)</label>
+                        <input type="time" id="startTime" class="form-control" required value="10:00">
+                    </div>
+
+                    <div id="durationPreview" class="preview-box"></div>
+                    <div id="warningBanner" class="warning-banner" style="display: none;"></div>
+
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <button type="submit" id="submitBtn" class="btn-submit btn-normal">Save to Cloud Grid</button>
+                        <button type="button" id="deleteBtn" class="btn-submit btn-warning-state" style="display: none; background-color: #dc2626;">Delete Appointment</button>
+                        <button type="button" id="cancelEditBtn" style="display: none; background: none; border: 1px solid #cbd5e1; padding: 10px; border-radius: 6px; cursor: pointer; font-weight: 500; color: #64748b;">Cancel Editing</button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="calendar-container">
+                <div id="calendarHeader" class="calendar-header">
+                    <div class="header-cell" style="font-size: 0.85em;">Timeline</div>
                 </div>
-
-            <div id="calendarScrollWindow" class="calendar-scroll-window">
-                <div class="calendar-body">
-                    <div id="timeColumn" class="time-column"></div>
-                    
-                    <div id="staffTrackContainer" style="display: contents;"></div>
+                <div id="calendarScrollWindow" class="calendar-scroll-window">
+                    <div class="calendar-body">
+                        <div id="timeColumn" class="time-column"></div>
+                        <div id="staffTrackContainer" style="display: contents;"></div>
+                    </div>
                 </div>
             </div>
         </div>
-
     </div>
 
     <script src="app.js"></script>
