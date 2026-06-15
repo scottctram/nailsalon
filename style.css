@@ -1,4 +1,6 @@
-/* Base Page Setup */
+/* ==========================================================================
+   1. Base Setup & Reset Architecture
+   ========================================================================== */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     margin: 0;
@@ -23,7 +25,9 @@ header p {
     font-size: 0.95rem; 
 }
 
-/* Two-Column Split Screen Layout Framework */
+/* ==========================================================================
+   2. Two-Column Dashboard Layout
+   ========================================================================== */
 .app-layout {
     display: grid;
     grid-template-columns: 360px 1fr;
@@ -31,7 +35,7 @@ header p {
     align-items: start;
 }
 
-/* Left Column: Phone Booking Panel */
+/* Left Column Control Panel */
 .sidebar-panel {
     background: #ffffff;
     border-radius: 12px;
@@ -50,6 +54,9 @@ header p {
     padding-bottom: 8px;
 }
 
+/* ==========================================================================
+   3. Form Elements & Input Group Modules
+   ========================================================================== */
 .form-group { 
     margin-bottom: 16px; 
 }
@@ -76,7 +83,15 @@ header p {
     border-color: #4F46E5; 
 }
 
-/* Informational & Soft Overlap Feedback Messages */
+textarea.form-control {
+    resize: vertical;
+    min-height: 60px;
+    font-family: inherit;
+}
+
+/* ==========================================================================
+   4. Interactive Validation Banners & Buttons
+   ========================================================================== */
 .preview-box { 
     background-color: #f0fdf4; 
     border: 1px solid #bbf7d0; 
@@ -98,7 +113,6 @@ header p {
     line-height: 1.4; 
 }
 
-/* Submission Buttons & Override Warning States */
 .btn-submit { 
     width: 100%; 
     padding: 12px; 
@@ -124,17 +138,21 @@ header p {
     background-color: #b91c1c; 
 }
 
-/* Right Column: Calendar Grid Viewport Architecture */
+/* ==========================================================================
+   5. Responsive Interactive Calendar Matrix (Updated for 8 Staff Channels)
+   ========================================================================== */
 .calendar-container { 
     background: #ffffff; 
     border-radius: 12px; 
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
     border: 1px solid #e2e8f0; 
-    overflow: hidden; 
+    overflow-x: auto; /* Enables smooth sidescrolling on smaller screen windows */
 }
+
 .calendar-header { 
     display: grid; 
-    grid-template-columns: 80px repeat(4, minmax(120px, 1fr)); 
+    /* 80px timeline track + 8 equal technician content tracks */
+    grid-template-columns: 80px repeat(8, minmax(120px, 1fr)); 
     border-bottom: 2px solid #e2e8f0; 
     background-color: #f8fafc; 
     text-align: center; 
@@ -145,27 +163,33 @@ header p {
     color: #475569; 
     font-weight: 600; 
     font-size: 0.95rem; 
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 .header-cell:last-child { 
     border-right: none; 
 }
 
-/* Scroll Window Matrix Containers */
+/* Main Matrix Scrolling Framework */
 .calendar-scroll-window { 
-    height: 450px; 
+    height: 600px; 
     overflow-y: auto; 
     position: relative; 
     scroll-behavior: smooth; 
 }
 .calendar-body { 
     display: grid; 
-    grid-template-columns: 80px repeat(4, minmax(120px, 1fr));
+    /* Matches header track definitions perfectly */
+    grid-template-columns: 80px repeat(8, minmax(120px, 1fr));
     position: relative; 
+    /* Extended workspace: 12 map hours (09:00 to 21:00) * 60px/hour = 720px */
     height: 720px; 
     background-image: linear-gradient(#e2e8f0 1px, transparent 1px); 
     background-size: 100% 60px; 
 }
 
+/* Timeline Label Configurations */
 .time-column { 
     display: flex; 
     flex-direction: column; 
@@ -184,6 +208,7 @@ header p {
     box-sizing: border-box; 
 }
 
+/* Individual Staff Event Tracks */
 .staff-column { 
     position: relative; 
     height: 100%; 
@@ -193,7 +218,9 @@ header p {
     border-right: none; 
 }
 
-/* Absolute Vector-Positioned Appointment Blocks */
+/* ==========================================================================
+   6. Absolute Vector-Positioned Appointment Blocks
+   ========================================================================== */
 .appointment-block {
     position: absolute; 
     left: 4px; 
@@ -208,16 +235,14 @@ header p {
     font-size: 0.82rem; 
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); 
     line-height: 1.3;
+    transition: transform 0.1s, box-shadow 0.1s;
+}
+.appointment-block:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 6px rgba(79, 70, 229, 0.15);
+    background-color: #e0e7ff;
 }
 
-/* Styling for the new notes text area box */
-textarea.form-control {
-    resize: vertical;
-    min-height: 60px;
-    font-family: inherit;
-}
-
-/* Styling to make the notes look neat inside the calendar blocks */
 .appointment-notes {
     font-size: 0.75em;
     font-style: italic;
