@@ -9,7 +9,7 @@ const SERVICES = {
     'Nail Art Removal': 15,
     'Other (Custom)': 0 
 };
-const STAFF_MEMBERS = ['Alice', 'Bella', 'Chloe', 'Diana'];
+const STAFF_MEMBERS = ['Anna', 'Kim', 'Rose', 'Maira', 'Yuzu', 'Komal', 'Ruby', 'Linda'];
 const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
 const START_HOUR = 9;
 
