@@ -67,7 +67,7 @@ let supabaseClient = null;
 
 // Document Nodes
 const receiptForm = document.getElementById('receiptForm');
-const servicedBySelect = document.getElementById('servicedBy');
+const masterStaffSelect = document.getElementById('masterStaff');
 const miscInput = document.getElementById('miscInput');
 const submitBtn = document.getElementById('submitBtn');
 const receiptBox = document.getElementById('receiptBox');
@@ -92,35 +92,53 @@ function createCheckboxRow(containerId, itemMap) {
         const uniqueId = `${containerId}_item_${index++}`;
         const row = document.createElement('div');
         row.className = 'menu-item-row';
+        
+        // Render item data alongside internal matching components
         row.innerHTML = `
             <input type="checkbox" id="${uniqueId}" data-name="${name}" data-price="${price}">
             <label for="${uniqueId}">${name} ($${price.toFixed(2)})</label>
-            <div class="qty-input-wrapper" id="wrapper_${uniqueId}">
-                <span>Qty:</span>
-                <input type="number" class="qty-field" id="qty_${uniqueId}" min="1" max="20" value="1">
+            
+            <div class="controls-wrapper-box" id="wrapper_${uniqueId}">
+                <div class="qty-input-wrapper">
+                    <span>Qty:</span>
+                    <input type="number" class="qty-field" id="qty_${uniqueId}" min="1" max="20" value="1">
+                </div>
+                <div class="staff-inline-wrapper">
+                    <span>By:</span>
+                    <select class="staff-inline-field" id="staff_${uniqueId}"></select>
+                </div>
             </div>
         `;
         container.appendChild(row);
 
         const checkbox = row.querySelector('input[type="checkbox"]');
-        const qtyWrapper = row.querySelector('.qty-input-wrapper');
+        const controlsWrapper = row.querySelector('.controls-wrapper-box');
         const qtyField = row.querySelector('.qty-field');
+        const inlineStaffSelect = row.querySelector('.staff-inline-field');
 
+        // Populate inline dropdown options
+        inlineStaffSelect.appendChild(new Option("None (N/A)", ""));
+        STAFF_MEMBERS.forEach(staff => inlineStaffSelect.appendChild(new Option(staff, staff)));
+
+        // Event listener to toggle container views live
         checkbox.addEventListener('change', function() {
             if (this.checked) {
-                qtyWrapper.classList.add('active');
+                controlsWrapper.classList.add('active');
+                // Autofill using whatever choice is currently parked in the master head dropdown
+                inlineStaffSelect.value = masterStaffSelect.value;
             } else {
-                qtyWrapper.classList.remove('active');
+                controlsWrapper.classList.remove('active');
                 qtyField.value = 1;
+                inlineStaffSelect.value = "";
             }
         });
     });
 }
 
 function initFormElements() {
-    servicedBySelect.innerHTML = '';
-    servicedBySelect.appendChild(new Option("Select Technician (Optional)", ""));
-    STAFF_MEMBERS.forEach(staff => servicedBySelect.appendChild(new Option(staff, staff)));
+    masterStaffSelect.innerHTML = '';
+    masterStaffSelect.appendChild(new Option("Select Technician (Default)", ""));
+    STAFF_MEMBERS.forEach(staff => masterStaffSelect.appendChild(new Option(staff, staff)));
 
     createCheckboxRow('nailServicesContainer', SALON_MENU.nails);
     createCheckboxRow('waxingServicesContainer', SALON_MENU.waxing);
@@ -183,28 +201,45 @@ receiptForm.addEventListener('submit', async function(e) {
     }
 
     submitBtn.textContent = 'Processing and Syncing...';
-    const chosenStaff = servicedBySelect.value || null;
 
     let subtotal = 0;
     let selectedItemsList = [];
     let receiptItemsHTML = '';
+    let staffTrackerList = [];
 
     checkedBoxes.forEach(cb => {
         const name = cb.getAttribute('data-name');
         const price = parseFloat(cb.getAttribute('data-price'));
+        
         const qtyField = document.getElementById(`qty_${cb.id}`);
         const qty = parseInt(qtyField.value) || 1;
+        
+        const inlineStaffField = document.getElementById(`staff_${cb.id}`);
+        const serviceStaff = inlineStaffField.value || null;
+        
         const totalItemCost = price * qty;
-
         subtotal += totalItemCost;
-        selectedItemsList.push(qty > 1 ? `${name} (x${qty})` : name);
 
+        // Save metadata text strings for auditing
+        let dbDescriptionEntry = qty > 1 ? `${name} (x${qty})` : name;
+        if (serviceStaff) {
+            dbDescriptionEntry += ` [By: ${serviceStaff}]`;
+            staffTrackerList.push(serviceStaff);
+        }
+        selectedItemsList.push(dbDescriptionEntry);
+
+        // Construct HTML rows for receipt output layout canvas
         receiptItemsHTML += `
             <div class="receipt-row">
                 <span>${name}${qty > 1 ? ` <small style="color:#64748b;">x${qty}</small>` : ''}</span>
                 <span>$${totalItemCost.toFixed(2)}</span>
             </div>
         `;
+        if (serviceStaff) {
+            receiptItemsHTML += `
+                <div class="receipt-staff-line">↳ Serviced By: ${serviceStaff}</div>
+            `;
+        }
     });
 
     if (miscPrice > 0) {
@@ -216,6 +251,10 @@ receiptForm.addEventListener('submit', async function(e) {
     const tax = subtotal * HST_RATE;
     const total = subtotal + tax;
 
+    // Filter unique worker strings to drop into the overarching single table tracking field
+    const uniqueStaffArray = [...new Set(staffTrackerList)];
+    const finalStaffString = uniqueStaffArray.length > 0 ? uniqueStaffArray.join(', ') : null;
+
     const receiptPayload = {
         product_name: selectedItemsList.join(', ').substring(0, 250),
         product_price: subtotal - miscPrice,
@@ -225,7 +264,7 @@ receiptForm.addEventListener('submit', async function(e) {
         subtotal: subtotal,
         tax: tax,
         total: total,
-        serviced_by: chosenStaff
+        serviced_by: finalStaffString
     };
 
     try {
@@ -233,12 +272,6 @@ receiptForm.addEventListener('submit', async function(e) {
         if (error) throw error;
 
         document.getElementById('receiptDate').innerText = new Date(data[0].created_at).toLocaleString();
-        
-        const staffDisplay = document.getElementById('receiptStaff');
-        if (data[0].serviced_by) {
-            staffDisplay.innerText = `SERVICED BY: ${data[0].serviced_by}`;
-            staffDisplay.style.display = 'block';
-        } else { staffDisplay.style.display = 'none'; }
         
         document.getElementById('receiptItems').innerHTML = receiptItemsHTML;
         document.getElementById('receiptSubtotal').innerText = `$${subtotal.toFixed(2)}`;
@@ -251,10 +284,12 @@ receiptForm.addEventListener('submit', async function(e) {
         
         // Reset states cleanly
         miscInput.value = '';
+        masterStaffSelect.value = '';
         checkedBoxes.forEach(cb => {
             cb.checked = false;
             document.getElementById(`wrapper_${cb.id}`).classList.remove('active');
             document.getElementById(`qty_${cb.id}`).value = 1;
+            document.getElementById(`staff_${cb.id}`).value = "";
         });
     } catch (err) {
         alert('Database Sync Error: ' + err.message);
