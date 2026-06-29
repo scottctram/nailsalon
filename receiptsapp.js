@@ -4,9 +4,9 @@ const SUPABASE_ANON_KEY = 'sb_publishable_lYXIa2nPYnpn6CGpPHNVEw_yDOp0P13';
 const HST_RATE = 0.13;
 const STAFF_MEMBERS = ['Anna', 'Kim', 'Rose', 'Maira', 'Yuzu', 'Komal', 'Ruby', 'Linda'];
 
-// CENTRALIZED PRICING DICTIONARY
+// CATEGORIZED SALON MASTER MENU DICTIONARY
 const SALON_MENU = {
-    products: {
+    nails: {
         "Full Set (No Colour)": 35.00,
         "Refill (No Colour)": 30.00,
         "Full Set (With Colour)": 45.00,
@@ -21,52 +21,58 @@ const SALON_MENU = {
         "Spa Pedicure & Manicure (Colour)": 70.00,
         "Colour Change (Fingers)": 20.00,
         "Colour Change (Toes)": 20.00,
-        "Shellac Removal": 7.00,
-        "Artificial Nail Removal": 17.00,
         "Finger Nails Trim": 10.00,
-        "Toe Nails Trim": 10.00,
-        "Facial Treatment": 45.00
+        "Toe Nails Trim": 10.00
     },
-    services: {
-        "None / No Add-on": 0.00,
-        "French Finish": 10.00,
-        "Nail Design": 5.00,
-        "Chrome Finish": 10.00,
-        "Ombre Look": 15.00,
-        "Extra Length Extension": 5.00,
-        "Take Off Shellac Add-on": 5.00,
+    waxing: {
         "Waxing: Eyebrows": 8.00,
-        "Waxing: Upper Lips": 5.00,
+        "Waxing: Upper lips": 5.00,
         "Waxing: Chin": 6.00,
-        "Waxing: Full Face": 25.00,
-        "Waxing: Full Body": 130.00,
+        "Waxing: Full face": 25.00,
+        "Waxing: Under arms": 10.00,
+        "Waxing: Full arms": 30.00,
+        "Waxing: Half arms": 20.00,
+        "Waxing: Full legs": 40.00,
+        "Waxing: Half legs": 25.00,
+        "Waxing: Chest": 20.00,
+        "Waxing: Back": 35.00,
+        "Waxing: Bikini": 20.00,
+        "Waxing: Brazilian": 40.00,
+        "Waxing: Full body": 130.00,
         "Threading: Eyebrows": 8.00,
-        "Threading: Upper Lips": 5.00,
+        "Threading: Upper lips": 5.00,
         "Threading: Chin": 6.00,
+        "Threading: Full face": 30.00
+    },
+    other: {
+        "French Finish Add-on": 10.00,
+        "Design Add-on": 5.00,
+        "Chrome Add-on": 10.00,
+        "Ombre Add-on": 15.00,
+        "Extra Length Add-on": 5.00,
+        "Take Off Shellac Add-on": 5.00,
+        "Shellac Removal Service": 7.00,
+        "Artificial Nail Removal": 17.00,
         "Eyelash: Single (One by One)": 75.00,
         "Eyelash: Refill Single Lashes": 50.00,
         "Eyelash: Strip Lashes": 15.00,
         "Eyelash: Individual Lashes": 40.00,
         "Lash Lift": 25.00,
-        "Eyebrow/Eyelash Tinting": 10.00
+        "Eyebrow/Eyelash Tinting": 10.00,
+        "Facial Treatment": 45.00
     }
 };
 
 let supabaseClient = null;
 
-// Form DOM selectors
+// DOM Target Anchors
 const receiptForm = document.getElementById('receiptForm');
 const servicedBySelect = document.getElementById('servicedBy');
-const productSelect = document.getElementById('productSelect');
-const productQtyInput = document.getElementById('productQty');
-const serviceSelect = document.getElementById('serviceSelect');
-const serviceQtyInput = document.getElementById('serviceQty');
 const miscInput = document.getElementById('miscInput');
 const submitBtn = document.getElementById('submitBtn');
 const receiptBox = document.getElementById('receiptBox');
 const placeholderText = document.getElementById('placeholderText');
 
-// Auth DOM selectors
 const loginForm = document.getElementById('loginForm');
 const loginEmail = document.getElementById('loginEmail');
 const loginPassword = document.getElementById('loginPassword');
@@ -75,21 +81,53 @@ const appWorkspace = document.getElementById('appWorkspace');
 const loginError = document.getElementById('loginError');
 const logoutBtn = document.getElementById('logoutBtn');
 
+// Helper function to dynamically paint checkbox nodes with sliding input listeners
+function createCheckboxRow(containerId, itemMap) {
+    const container = document.getElementById(containerId);
+    container.innerHTML = '';
+    
+    let index = 0;
+    Object.entries(itemMap).forEach(([name, price]) => {
+        const uniqueId = `${containerId}_item_${index++}`;
+        
+        const row = document.createElement('div');
+        row.className = 'menu-item-row';
+        row.innerHTML = `
+            <input type="checkbox" id="${uniqueId}" data-name="${name}" data-price="${price}">
+            <label for="${uniqueId}">${name} ($${price.toFixed(2)})</label>
+            <div class="qty-input-wrapper" id="wrapper_${uniqueId}">
+                <span>Qty:</span>
+                <input type="number" class="qty-field" id="qty_${uniqueId}" min="1" max="20" value="1">
+            </div>
+        `;
+        
+        container.appendChild(row);
+
+        // Bind Change Listener to toggle quantity box display
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        const qtyWrapper = row.querySelector('.qty-input-wrapper');
+        const qtyField = row.querySelector('.qty-field');
+
+        checkbox.addEventListener('change', function() {
+            if (this.checked) {
+                qtyWrapper.classList.add('active');
+            } else {
+                qtyWrapper.classList.remove('active');
+                qtyField.value = 1; // Reset multiplier when unchecked
+            }
+        });
+    });
+}
+
 function initFormElements() {
     servicedBySelect.innerHTML = '';
-    productSelect.innerHTML = '';
-    serviceSelect.innerHTML = '';
-    
     servicedBySelect.appendChild(new Option("Select Technician (Optional)", ""));
     STAFF_MEMBERS.forEach(staff => servicedBySelect.appendChild(new Option(staff, staff)));
 
-    Object.entries(SALON_MENU.products).forEach(([name, price]) => {
-        productSelect.appendChild(new Option(`${name} ($${price.toFixed(2)})`, name));
-    });
-
-    Object.entries(SALON_MENU.services).forEach(([name, price]) => {
-        serviceSelect.appendChild(new Option(price === 0 ? name : `${name} (+$${price.toFixed(2)})`, name));
-    });
+    // Render checkbox sections dynamically
+    createCheckboxRow('nailServicesContainer', SALON_MENU.nails);
+    createCheckboxRow('waxingServicesContainer', SALON_MENU.waxing);
+    createCheckboxRow('otherServicesContainer', SALON_MENU.other);
 }
 
 async function initSupabase() {
@@ -100,7 +138,7 @@ async function initSupabase() {
 
 function showDashboard() {
     loginOverlay.style.display = 'none';
-    appWorkspace.className = ''; // Remove hidden constraints
+    appWorkspace.className = '';
     appWorkspace.style.opacity = '1';
     appWorkspace.style.pointerEvents = 'auto';
     initFormElements();
@@ -128,35 +166,66 @@ logoutBtn.addEventListener('click', async function() {
     showLogin();
 });
 
-// Calculator & Database Pipeline
+// MULTI-ITEM CALCULATOR PIPELINE RUNNER
 receiptForm.addEventListener('submit', async function(e) {
     e.preventDefault();
-    submitBtn.textContent = 'Processing and Syncing...';
+    
+    // Select all checked items across the panels
+    const checkedBoxes = document.querySelectorAll('.checkbox-menu-grid input[type="checkbox"]:checked');
+    const miscPrice = parseFloat(miscInput.value) || 0.00;
 
+    if (checkedBoxes.length === 0 && miscPrice === 0) {
+        alert('Please check at least one service item or enter a miscellaneous fee amount.');
+        return;
+    }
+
+    submitBtn.textContent = 'Processing & Syncing...';
     const chosenStaff = servicedBySelect.value || null;
-    
-    const pName = productSelect.value;
-    const pBasePrice = SALON_MENU.products[pName];
-    const pQty = parseInt(productQtyInput.value) || 1;
-    const pTotalPrice = pBasePrice * pQty;
 
-    const sName = serviceSelect.value;
-    const sBasePrice = SALON_MENU.services[sName];
-    const sQty = parseInt(serviceQtyInput.value) || 1;
-    const sTotalPrice = sBasePrice * sQty;
-    
-    const mPrice = parseFloat(miscInput.value) || 0.00;
+    let subtotal = 0;
+    let selectedItemsList = [];
+    let receiptItemsHTML = '';
 
-    const subtotal = pTotalPrice + sTotalPrice + mPrice;
+    // Loop through checked combinations
+    checkedBoxes.forEach(cb => {
+        const name = cb.getAttribute('data-name');
+        const price = parseFloat(cb.getAttribute('data-price'));
+        const qtyField = document.getElementById(`qty_${cb.id}`);
+        const qty = parseInt(qtyField.value) || 1;
+        const totalItemCost = price * qty;
+
+        subtotal += totalItemCost;
+        
+        // Save detailed strings for database array logging fields
+        selectedItemsList.push(qty > 1 ? `${name} (x${qty})` : name);
+
+        // Construct individual item lines on receipt markup
+        receiptItemsHTML += `
+            <div class="receipt-row">
+                <span>${name}${qty > 1 ? ` <small style="color:#64748b;">x${qty}</small>` : ''}</span>
+                <span>$${totalItemCost.toFixed(2)}</span>
+            </div>
+        `;
+    });
+
+    if (miscPrice > 0) {
+        subtotal += miscPrice;
+        receiptItemsHTML += `<div class="receipt-row"><span>Misc Amount</span><span>$${miscPrice.toFixed(2)}</span></div>`;
+        selectedItemsList.push(`Misc: $${miscPrice.toFixed(2)}`);
+    }
+
     const tax = subtotal * HST_RATE;
     const total = subtotal + tax;
 
+    // Package the composite checkout text description line
+    const finalProductString = selectedItemsList.join(', ');
+
     const receiptPayload = {
-        product_name: pQty > 1 ? `${pName} (x${pQty})` : pName,
-        product_price: pTotalPrice,
-        service_name: sName === "None / No Add-on" ? sName : (sQty > 1 ? `${sName} (x${sQty})` : sName),
-        service_price: sTotalPrice,
-        misc_price: mPrice,
+        product_name: finalProductString.substring(0, 250), // Consolidate items summary description line
+        product_price: subtotal - miscPrice,
+        service_name: "Multi-Selection Checkout",
+        service_price: 0.00,
+        misc_price: miscPrice,
         subtotal: subtotal,
         tax: tax,
         total: total,
@@ -177,27 +246,8 @@ receiptForm.addEventListener('submit', async function(e) {
             staffDisplay.style.display = 'block';
         } else { staffDisplay.style.display = 'none'; }
         
-        let itemsHTML = `
-            <div class="receipt-row">
-                <span>${pName}${pQty > 1 ? ` <small style="color:#64748b;">x${pQty}</small>` : ''}</span>
-                <span>$${pTotalPrice.toFixed(2)}</span>
-            </div>
-        `;
-        
-        if (sName !== "None / No Add-on") {
-            itemsHTML += `
-                <div class="receipt-row">
-                    <span>${sName}${sQty > 1 ? ` <small style="color:#64748b;">x${sQty}</small>` : ''}</span>
-                    <span>$${sTotalPrice.toFixed(2)}</span>
-                </div>
-            `;
-        }
-        
-        if (mPrice > 0) {
-            itemsHTML += `<div class="receipt-row"><span>Misc Amount</span><span>$${mPrice.toFixed(2)}</span></div>`;
-        }
-        
-        document.getElementById('receiptItems').innerHTML = itemsHTML;
+        // Inject computed layouts
+        document.getElementById('receiptItems').innerHTML = receiptItemsHTML;
         document.getElementById('receiptSubtotal').innerText = `$${subtotal.toFixed(2)}`;
         document.getElementById('receiptTax').innerText = `$${tax.toFixed(2)}`;
         document.getElementById('receiptTotal').innerText = `$${total.toFixed(2)}`;
@@ -206,9 +256,13 @@ receiptForm.addEventListener('submit', async function(e) {
         receiptBox.style.display = 'block';
         submitBtn.textContent = 'Generate & Save Receipt';
         
+        // Reset check panel states completely
         miscInput.value = '';
-        productQtyInput.value = 1;
-        serviceQtyInput.value = 1;
+        checkedBoxes.forEach(cb => {
+            cb.checked = false;
+            document.getElementById(`wrapper_${cb.id}`).classList.remove('active');
+            document.getElementById(`qty_${cb.id}`).value = 1;
+        });
     }
 });
 
