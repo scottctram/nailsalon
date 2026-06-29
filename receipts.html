@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Portal - HST Receipt Generator</title>
-    
     <link rel="stylesheet" href="receiptstyles.css">
-    
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
@@ -17,12 +15,12 @@
             <p>Sign in to access point-of-sale tool.</p>
             <form id="loginForm">
                 <div class="form-group">
-                    <label>Email Address</label>
-                    <input type="email" id="loginEmail" class="form-control" required>
+                    <label for="loginEmail">Email Address</label>
+                    <input type="email" id="loginEmail" class="form-control" required placeholder="name@email.com">
                 </div>
                 <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Password</label>
-                    <input type="password" id="loginPassword" class="form-control" required>
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••">
                 </div>
                 <button type="submit" id="loginBtn" class="btn-submit btn-normal">Sign In</button>
                 <div id="loginError" class="login-error-msg"></div>
