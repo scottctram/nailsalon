@@ -50,21 +50,102 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 // Initialize Dynamic HTML Dropdowns & Matrix Columns
 function initFormElements() {
-    dateInput.value = new Date().toISOString().split('T')[0];
+    if (!dateInput.value) {
+        dateInput.value = new Date().toISOString().split('T')[0];
+    }
     
-    // Clear out setup duplicates before populating
     staffSelect.innerHTML = '';
     serviceSelect.innerHTML = '';
-    calendarHeader.innerHTML = '<div class="header-cell" style="font-size: 0.85em;">Timeline</div>';
+    calendarHeader.innerHTML = '<div class="header-cell" style="font-size: 0.85em; display: flex; align-items: center; justify-content: center;">Timeline</div>';
     timeColumn.innerHTML = '';
 
+    // Populate standard input options
     STAFF_MEMBERS.forEach(s => { 
         staffSelect.appendChild(new Option(s, s)); 
-        calendarHeader.appendChild(Object.assign(document.createElement('div'), {className: 'header-cell', textContent: s})); 
     });
     
     Object.keys(SERVICES).forEach(s => serviceSelect.appendChild(new Option(`${s} (${SERVICES[s]} min)`, s)));
     HOURS.forEach(h => timeColumn.appendChild(Object.assign(document.createElement('div'), {className: 'time-slot', textContent: h})));
+}
+
+// Renders the checkboxes up top depending on live scheduling allocation profiles
+function renderHeaderToggles() {
+    // Preserve first "Timeline" block element
+    const timelineCell = calendarHeader.firstElementChild;
+    calendarHeader.innerHTML = '';
+    calendarHeader.appendChild(timelineCell);
+
+    STAFF_MEMBERS.forEach(staffName => {
+        const headerCell = document.createElement('div');
+        headerCell.className = 'header-cell';
+        
+        // Audit presence of existing functional client appointments
+        const activeAppointments = appointments.filter(a => 
+            a.date === dateInput.value && 
+            a.staff === staffName && 
+            a.customer !== 'STAFF_BLOCKED'
+        );
+        
+        const isBlocked = appointments.some(a => 
+            a.date === dateInput.value && 
+            a.staff === staffName && 
+            a.customer === 'STAFF_BLOCKED'
+        );
+
+        headerCell.innerHTML = `
+            <div style="font-weight: bold;">${staffName}</div>
+            <div class="header-toggle-container">
+                <input type="checkbox" class="block-off-checkbox" id="block_${staffName}" ${isBlocked ? 'checked' : ''} ${activeAppointments.length > 0 ? 'disabled title="Cannot block: worker has scheduled appointments"' : 'title="Toggle Block Day Off"'}>
+                <span>Block</span>
+            </div>
+        `;
+
+        // Intercept inline click mutations securely
+        const checkbox = headerCell.querySelector('.block-off-checkbox');
+        checkbox.addEventListener('change', () => handleBlockToggle(staffName, checkbox.checked));
+
+        calendarHeader.appendChild(headerCell);
+    });
+}
+
+// Processes day off overrides straight to Supabase
+async function handleBlockToggle(staffName, shouldBlock) {
+    const selectedDate = dateInput.value;
+
+    if (shouldBlock) {
+        // Build a special 9:00 AM to 9:00 PM blocker transaction block
+        const blockPayload = {
+            date: selectedDate,
+            customer: 'STAFF_BLOCKED',
+            staff: staffName,
+            service: 'Day Off / Unscheduled',
+            start_time: '09:00',
+            end_time: '21:00',
+            notes: 'Technician blocked directly from header matrices'
+        };
+
+        const { data, error } = await supabaseClient.from('appointments').insert([blockPayload]).select();
+        if (!error) {
+            appointments.push(data[0]);
+        } else {
+            alert('Could not sync block parameters: ' + error.message);
+        }
+    } else {
+        // Wipe tracking blocks out of cloud row limits
+        const targetBlock = appointments.find(a => a.date === selectedDate && a.staff === staffName && a.customer === 'STAFF_BLOCKED');
+        if (targetBlock) {
+            const { error } = await supabaseClient.from('appointments').delete().eq('id', targetBlock.id);
+            if (!error) {
+                appointments = appointments.filter(a => a.id !== targetBlock.id);
+            } else {
+                alert('Could not remove block parameters: ' + error.message);
+            }
+        }
+    }
+    
+    // Repaint interfaces instantly
+    renderCalendarGrid();
+    updateFormUI();
 }
 
 // Calculate Accurate Service End Boundary Windows
@@ -107,6 +188,20 @@ function updateFormUI() {
     if (startTimeInput.value) {
         durationPreview.innerHTML = `<strong>Duration Span:</strong> ${startTimeInput.value} to ${calculateEndTime(startTimeInput.value, serviceSelect.value)}`;
     }
+    
+    // Check if employee is completely blocked off for the day
+    const employeeIsBlocked = appointments.some(a => a.date === dateInput.value && a.staff === staffSelect.value && a.customer === 'STAFF_BLOCKED');
+    
+    if (employeeIsBlocked) {
+        warningBanner.style.display = 'block';
+        warningBanner.innerHTML = `⚠️ <strong>Technician Unavailable:</strong> ${staffSelect.value} has been blocked off for a Day Off today.`;
+        submitBtn.textContent = 'Technician Locked';
+        submitBtn.className = 'btn-submit btn-warning-state';
+        submitBtn.disabled = true;
+        return;
+    }
+    
+    submitBtn.disabled = false;
     const hasConflict = checkConflict();
     if (hasConflict) {
         warningBanner.style.display = 'block';
@@ -122,6 +217,9 @@ function updateFormUI() {
 }
 
 function startEditing(appt) {
+    // Prevent opening default edit panels on locked day cards
+    if (appt.customer === 'STAFF_BLOCKED') return;
+
     editingId = appt.id;
     dateInput.value = appt.date;
     customerInput.value = appt.customer;
@@ -147,38 +245,56 @@ function resetForm() {
 
 function renderCalendarGrid() {
     staffTrackContainer.innerHTML = '';
+    
+    // Refresh column header checkboxes synchronously on page draws
+    renderHeaderToggles();
+
     STAFF_MEMBERS.forEach(staffName => {
         const columnTrack = document.createElement('div');
         columnTrack.className = 'staff-column';
         
-        appointments.filter(a => a.date === dateInput.value && a.staff === staffName).forEach(appt => {
-            const rawStart = appt.start_time || appt.startTime;
-            const rawEnd = appt.end_time || appt.endTime;
+        const dayEntries = appointments.filter(a => a.date === dateInput.value && a.staff === staffName);
+        
+        // Look for the special day-off indicator row
+        const isBlockedOff = dayEntries.some(a => a.customer === 'STAFF_BLOCKED');
 
-            const [stH, stM] = rawStart.split(':').map(Number);
-            const [endH, endM] = rawEnd.split(':').map(Number);
-            
-            const block = document.createElement('div');
-            block.className = 'appointment-block';
-            block.style.top = `${(stH - START_HOUR) * 60 + stM}px`;
-            block.style.height = `${(endH - stH) * 60 + (endM - stM)}px`;
-            block.style.cursor = 'pointer';
-            
-            block.innerHTML = `
-                <div style="font-weight: 700; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${appt.customer}</div>
-                <div style="opacity: 0.95; font-size: 0.88em; font-weight: 500;">${appt.service}</div>
-                <div style="font-size: 0.78em; margin-top: 2px; font-weight: bold; opacity: 0.8;">${rawStart} - ${rawEnd}</div>
-                ${appt.notes ? `<div class="appointment-notes" title="${appt.notes}">📝 ${appt.notes}</div>` : ''}
-            `;
-            
-            block.addEventListener('click', () => startEditing(appt));
-            columnTrack.appendChild(block);
-        });
+        if (isBlockedOff) {
+            // Paint full elegant striped block over the track channel area
+            const blockOverlay = document.createElement('div');
+            blockOverlay.className = 'blocked-day-overlay';
+            blockOverlay.innerHTML = `<div class="blocked-badge">DAY OFF</div>`;
+            columnTrack.appendChild(blockOverlay);
+        } else {
+            // Draw regular standard appointment floating nodes
+            dayEntries.forEach(appt => {
+                const rawStart = appt.start_time || appt.startTime;
+                const rawEnd = appt.end_time || appt.endTime;
+
+                const [stH, stM] = rawStart.split(':').map(Number);
+                const [endH, endM] = rawEnd.split(':').map(Number);
+                
+                const block = document.createElement('div');
+                block.className = 'appointment-block';
+                block.style.top = `${(stH - START_HOUR) * 60 + stM}px`;
+                block.style.height = `${(endH - stH) * 60 + (endM - stM)}px`;
+                block.style.cursor = 'pointer';
+                
+                block.innerHTML = `
+                    <div style="font-weight: 700; text-overflow: ellipsis; white-space: nowrap; overflow: hidden;">${appt.customer}</div>
+                    <div style="opacity: 0.95; font-size: 0.88em; font-weight: 500;">${appt.service}</div>
+                    <div style="font-size: 0.78em; margin-top: 2px; font-weight: bold; opacity: 0.8;">${rawStart} - ${rawEnd}</div>
+                    ${appt.notes ? `<div class="appointment-notes" title="${appt.notes}">📝 ${appt.notes}</div>` : ''}
+                `;
+                
+                block.addEventListener('click', () => startEditing(appt));
+                columnTrack.appendChild(block);
+            });
+        }
         staffTrackContainer.appendChild(columnTrack);
     });
 }
 
-// Fetch calendar data from database (Only works if session is authorized)
+// Fetch calendar data from database
 async function fetchData() {
     const { data, error } = await supabaseClient.from('appointments').select('*');
     if (!error) {
@@ -188,30 +304,25 @@ async function fetchData() {
     }
 }
 
-// Show schedule dashboard interface layer
-function showDashboard() {
+async function showDashboard() {
     loginOverlay.style.display = 'none';
     appWorkspace.style.opacity = '1';
     appWorkspace.style.pointerEvents = 'auto';
     initFormElements();
-    fetchData();
+    await fetchData();
 }
 
-// Show login layer interface template block
 function showLogin() {
     loginOverlay.style.display = 'flex';
     appWorkspace.style.opacity = '0';
     appWorkspace.style.pointerEvents = 'none';
 }
 
-// Connect application to backend database layer
 async function initSupabase() {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // Check if user is already remembered locally from a past session
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
-        showDashboard();
+        await showDashboard();
     } else {
         showLogin();
     }
@@ -233,12 +344,10 @@ loginForm.addEventListener('submit', async function(e) {
         loginError.style.display = 'block';
         loginBtn.textContent = 'Sign In';
     } else {
-        loginBtn.textContent = 'Sign In';
-        showDashboard();
+        await showDashboard();
     }
 });
 
-// LOGOUT HANDLER LINK
 logoutBtn.addEventListener('click', async function() {
     await supabaseClient.auth.signOut();
     appointments = [];
@@ -247,7 +356,6 @@ logoutBtn.addEventListener('click', async function() {
     showLogin();
 });
 
-// Form Submit Pipeline (Handles both New Bookings and Updates)
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
     if (checkConflict() && !forceConfirmActive) {
@@ -286,7 +394,6 @@ form.addEventListener('submit', async function(e) {
     }
 });
 
-// Delete Execution Link Interceptions
 deleteBtn.addEventListener('click', async function() {
     if (!editingId) return;
     if (confirm(`Delete appointment for ${customerInput.value}?`)) {
