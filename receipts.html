@@ -15,11 +15,11 @@
             <p>Sign in to access point-of-sale tool.</p>
             <form id="loginForm">
                 <div class="form-group">
-                    <label>Email Address</label>
+                    <label for="loginEmail">Email Address</label>
                     <input type="email" id="loginEmail" class="form-control" required placeholder="name@email.com">
                 </div>
                 <div class="form-group" style="margin-bottom: 20px;">
-                    <label>Password</label>
+                    <label for="loginPassword">Password</label>
                     <input type="password" id="loginPassword" class="form-control" required placeholder="••••••••">
                 </div>
                 <button type="submit" id="loginBtn" class="btn-submit btn-normal">Sign In</button>
@@ -44,9 +44,9 @@
                 <h3>Calculate Invoice</h3>
                 <form id="receiptForm">
                     
-                    <div class="form-group master-staff-box">
-                        <label for="masterStaff">Main Technician (Autofills Checked Items)</label>
-                        <select id="masterStaff" class="form-control"></select>
+                    <div class="form-group">
+                        <label for="servicedBy">Serviced By (Technician)</label>
+                        <select id="servicedBy" class="form-control"></select>
                     </div>
 
                     <div class="menu-section-title">Nails & Hands Care</div>
@@ -72,6 +72,7 @@
                     <div class="receipt-header">
                         <h3>STORE RECEIPT</h3>
                         <div id="receiptDate" style="font-size: 0.85em; color: #333; margin-bottom: 4px;"></div>
+                        <div id="receiptStaff" style="font-size: 0.85em; font-weight: bold; color: #4F46E5; display: none;"></div>
                     </div>
                     
                     <div id="receiptItems"></div>

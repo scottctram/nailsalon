@@ -65,9 +65,9 @@ const SALON_MENU = {
 
 let supabaseClient = null;
 
-// Target DOM nodes safely
+// Document Nodes
 const receiptForm = document.getElementById('receiptForm');
-const masterStaffSelect = document.getElementById('masterStaff');
+const servicedBySelect = document.getElementById('servicedBy');
 const miscInput = document.getElementById('miscInput');
 const submitBtn = document.getElementById('submitBtn');
 const receiptBox = document.getElementById('receiptBox');
@@ -81,67 +81,46 @@ const appWorkspace = document.getElementById('appWorkspace');
 const loginError = document.getElementById('loginError');
 const logoutBtn = document.getElementById('logoutBtn');
 
-// Counter array tracker to avoid row reference pollution
-let totalRowCounter = 0;
-
+// Generates structural interactive input rows dynamically
 function createCheckboxRow(containerId, itemMap) {
     const container = document.getElementById(containerId);
     if (!container) return;
     container.innerHTML = '';
     
+    let index = 0;
     Object.entries(itemMap).forEach(([name, price]) => {
-        const uniqueIndex = totalRowCounter++;
+        const uniqueId = `${containerId}_item_${index++}`;
         const row = document.createElement('div');
         row.className = 'menu-item-row';
-        
         row.innerHTML = `
-            <input type="checkbox" id="check_${uniqueIndex}" class="service-checkbox" data-name="${name}" data-price="${price}">
-            <label for="check_${uniqueIndex}">${name} ($${price.toFixed(2)})</label>
-            
-            <div class="controls-wrapper-box" id="wrapper_${uniqueIndex}">
-                <div class="qty-input-wrapper">
-                    <span>Qty:</span>
-                    <input type="number" class="qty-field" id="qty_${uniqueIndex}" min="1" max="20" value="1">
-                </div>
-                <div class="staff-inline-wrapper">
-                    <span>By:</span>
-                    <select class="staff-inline-field" id="staff_${uniqueIndex}"></select>
-                </div>
+            <input type="checkbox" id="${uniqueId}" data-name="${name}" data-price="${price}">
+            <label for="${uniqueId}">${name} ($${price.toFixed(2)})</label>
+            <div class="qty-input-wrapper" id="wrapper_${uniqueId}">
+                <span>Qty:</span>
+                <input type="number" class="qty-field" id="qty_${uniqueId}" min="1" max="20" value="1">
             </div>
         `;
         container.appendChild(row);
 
-        const checkbox = row.querySelector('.service-checkbox');
-        const controlsWrapper = row.querySelector('.controls-wrapper-box');
+        const checkbox = row.querySelector('input[type="checkbox"]');
+        const qtyWrapper = row.querySelector('.qty-input-wrapper');
         const qtyField = row.querySelector('.qty-field');
-        const inlineStaffSelect = row.querySelector('.staff-inline-field');
 
-        // Populate the unique selection options inside this single line element
-        inlineStaffSelect.appendChild(new Option("None (N/A)", ""));
-        STAFF_MEMBERS.forEach(staff => inlineStaffSelect.appendChild(new Option(staff, staff)));
-
-        // Live visual event listener tracking toggles
         checkbox.addEventListener('change', function() {
             if (this.checked) {
-                controlsWrapper.style.display = 'flex';
-                if (masterStaffSelect) {
-                    inlineStaffSelect.value = masterStaffSelect.value;
-                }
+                qtyWrapper.classList.add('active');
             } else {
-                controlsWrapper.style.display = 'none';
+                qtyWrapper.classList.remove('active');
                 qtyField.value = 1;
-                inlineStaffSelect.value = "";
             }
         });
     });
 }
 
 function initFormElements() {
-    if (masterStaffSelect) {
-        masterStaffSelect.innerHTML = '';
-        masterStaffSelect.appendChild(new Option("Select Technician (Default)", ""));
-        STAFF_MEMBERS.forEach(staff => masterStaffSelect.appendChild(new Option(staff, staff)));
-    }
+    servicedBySelect.innerHTML = '';
+    servicedBySelect.appendChild(new Option("Select Technician (Optional)", ""));
+    STAFF_MEMBERS.forEach(staff => servicedBySelect.appendChild(new Option(staff, staff)));
 
     createCheckboxRow('nailServicesContainer', SALON_MENU.nails);
     createCheckboxRow('waxingServicesContainer', SALON_MENU.waxing);
@@ -149,18 +128,14 @@ function initFormElements() {
 }
 
 function showDashboard() {
-    if (loginOverlay) loginOverlay.style.display = 'none';
-    if (appWorkspace) {
-        appWorkspace.className = 'app-workspace-visible';
-    }
+    loginOverlay.style.display = 'none';
+    appWorkspace.className = 'app-workspace-visible';
     initFormElements();
 }
 
 function showLogin() {
-    if (loginOverlay) loginOverlay.style.display = 'flex';
-    if (appWorkspace) {
-        appWorkspace.className = 'app-workspace-hidden';
-    }
+    loginOverlay.style.display = 'flex';
+    appWorkspace.className = 'app-workspace-hidden';
 }
 
 async function initSupabase() {
@@ -169,150 +144,122 @@ async function initSupabase() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) { showDashboard(); } else { showLogin(); }
     } catch (err) {
-        console.error("Initialization check crashed:", err);
+        console.error("Supabase initialization crash intercepted:", err);
     }
 }
 
-// Security Logins
-if (loginForm) {
-    loginForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
-        if (!loginBtn) return;
-        loginBtn.textContent = 'Verifying...';
-        if (loginError) loginError.style.display = 'none';
-        
-        try {
-            const { error } = await supabaseClient.auth.signInWithPassword({ 
-                email: loginEmail.value, 
-                password: loginPassword.value 
-            });
-            if (error) {
-                if (loginError) {
-                    loginError.textContent = `❌ ${error.message}`;
-                    loginError.style.display = 'block';
-                }
-                loginBtn.textContent = 'Sign In';
-            } else { showDashboard(); }
-        } catch(err) {
+// Security Session Listeners
+loginForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    loginBtn.textContent = 'Verifying...';
+    loginError.style.display = 'none';
+    try {
+        const { error } = await supabaseClient.auth.signInWithPassword({ email: loginEmail.value, password: loginPassword.value });
+        if (error) {
+            loginError.textContent = `❌ ${error.message}`;
+            loginError.style.display = 'block';
             loginBtn.textContent = 'Sign In';
-        }
-    });
-}
+        } else { showDashboard(); }
+    } catch(err) {
+        loginBtn.textContent = 'Sign In';
+    }
+});
 
-if (logoutBtn) {
-    logoutBtn.addEventListener('click', async function() {
-        await supabaseClient.auth.signOut();
-        showLogin();
-    });
-}
+logoutBtn.addEventListener('click', async function() {
+    await supabaseClient.auth.signOut();
+    showLogin();
+});
 
-// Receipt Logic Runner Process Pipeline
-if (receiptForm) {
-    receiptForm.addEventListener('submit', async function(e) {
-        e.preventDefault();
+// POS calculation pipeline loop
+receiptForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+    
+    const checkedBoxes = document.querySelectorAll('.checkbox-menu-grid input[type="checkbox"]:checked');
+    const miscPrice = parseFloat(miscInput.value) || 0.00;
+
+    if (checkedBoxes.length === 0 && miscPrice === 0) {
+        alert('Please select at least one check item from the service list.');
+        return;
+    }
+
+    submitBtn.textContent = 'Processing and Syncing...';
+    const chosenStaff = servicedBySelect.value || null;
+
+    let subtotal = 0;
+    let selectedItemsList = [];
+    let receiptItemsHTML = '';
+
+    checkedBoxes.forEach(cb => {
+        const name = cb.getAttribute('data-name');
+        const price = parseFloat(cb.getAttribute('data-price'));
+        const qtyField = document.getElementById(`qty_${cb.id}`);
+        const qty = parseInt(qtyField.value) || 1;
+        const totalItemCost = price * qty;
+
+        subtotal += totalItemCost;
+        selectedItemsList.push(qty > 1 ? `${name} (x${qty})` : name);
+
+        receiptItemsHTML += `
+            <div class="receipt-row">
+                <span>${name}${qty > 1 ? ` <small style="color:#64748b;">x${qty}</small>` : ''}</span>
+                <span>$${totalItemCost.toFixed(2)}</span>
+            </div>
+        `;
+    });
+
+    if (miscPrice > 0) {
+        subtotal += miscPrice;
+        receiptItemsHTML += `<div class="receipt-row"><span>Misc Amount</span><span>$${miscPrice.toFixed(2)}</span></div>`;
+        selectedItemsList.push(`Misc: $${miscPrice.toFixed(2)}`);
+    }
+
+    const tax = subtotal * HST_RATE;
+    const total = subtotal + tax;
+
+    const receiptPayload = {
+        product_name: selectedItemsList.join(', ').substring(0, 250),
+        product_price: subtotal - miscPrice,
+        service_name: "Multi-Selection Checkout",
+        service_price: 0.00,
+        misc_price: miscPrice,
+        subtotal: subtotal,
+        tax: tax,
+        total: total,
+        serviced_by: chosenStaff
+    };
+
+    try {
+        const { data, error } = await supabaseClient.from('receipts').insert([receiptPayload]).select();
+        if (error) throw error;
+
+        document.getElementById('receiptDate').innerText = new Date(data[0].created_at).toLocaleString();
         
-        const checkedBoxes = document.querySelectorAll('.service-checkbox:checked');
-        const miscPrice = parseFloat(miscInput.value) || 0.00;
+        const staffDisplay = document.getElementById('receiptStaff');
+        if (data[0].serviced_by) {
+            staffDisplay.innerText = `SERVICED BY: ${data[0].serviced_by}`;
+            staffDisplay.style.display = 'block';
+        } else { staffDisplay.style.display = 'none'; }
+        
+        document.getElementById('receiptItems').innerHTML = receiptItemsHTML;
+        document.getElementById('receiptSubtotal').innerText = `$${subtotal.toFixed(2)}`;
+        document.getElementById('receiptTax').innerText = `$${tax.toFixed(2)}`;
+        document.getElementById('receiptTotal').innerText = `$${total.toFixed(2)}`;
 
-        if (checkedBoxes.length === 0 && miscPrice === 0) {
-            alert('Please select at least one treatment box.');
-            return;
-        }
-
-        if (submitBtn) submitBtn.textContent = 'Processing...';
-
-        let subtotal = 0;
-        let selectedItemsList = [];
-        let receiptItemsHTML = '';
-        let staffTrackerList = [];
-
+        placeholderText.style.display = 'none';
+        receiptBox.style.display = 'block';
+        submitBtn.textContent = 'Generate & Save Receipt';
+        
+        // Reset states cleanly
+        miscInput.value = '';
         checkedBoxes.forEach(cb => {
-            const name = cb.getAttribute('data-name');
-            const price = parseFloat(cb.getAttribute('data-price'));
-            
-            // Extract suffix components accurately using parent node extraction queries
-            const rowWrapper = cb.closest('.menu-item-row');
-            const qtyField = rowWrapper.querySelector('.qty-field');
-            const inlineStaffField = rowWrapper.querySelector('.staff-inline-field');
-            
-            const qty = parseInt(qtyField.value) || 1;
-            const serviceStaff = inlineStaffField.value || null;
-            
-            const totalItemCost = price * qty;
-            subtotal += totalItemCost;
-
-            let descriptionEntry = qty > 1 ? `${name} (x${qty})` : name;
-            if (serviceStaff) {
-                descriptionEntry += ` [By: ${serviceStaff}]`;
-                staffTrackerList.push(serviceStaff);
-            }
-            selectedItemsList.push(descriptionEntry);
-
-            receiptItemsHTML += `
-                <div class="receipt-row">
-                    <span>${name}${qty > 1 ? ` <small style="color:#64748b;">x${qty}</small>` : ''}</span>
-                    <span>$${totalItemCost.toFixed(2)}</span>
-                </div>
-            `;
-            if (serviceStaff) {
-                receiptItemsHTML += `<div class="receipt-staff-line">↳ Serviced By: ${serviceStaff}</div>`;
-            }
+            cb.checked = false;
+            document.getElementById(`wrapper_${cb.id}`).classList.remove('active');
+            document.getElementById(`qty_${cb.id}`).value = 1;
         });
-
-        if (miscPrice > 0) {
-            subtotal += miscPrice;
-            receiptItemsHTML += `<div class="receipt-row"><span>Misc Amount</span><span>$${miscPrice.toFixed(2)}</span></div>`;
-            selectedItemsList.push(`Misc: $${miscPrice.toFixed(2)}`);
-        }
-
-        const tax = subtotal * HST_RATE;
-        const total = subtotal + tax;
-
-        const uniqueStaff = [...new Set(staffTrackerList)];
-        const finalStaffString = uniqueStaff.length > 0 ? uniqueStaff.join(', ') : null;
-
-        const receiptPayload = {
-            product_name: selectedItemsList.join(', ').substring(0, 250),
-            product_price: subtotal - miscPrice,
-            service_name: "Multi-Selection Checkout",
-            service_price: 0.00,
-            misc_price: miscPrice,
-            subtotal: subtotal,
-            tax: tax,
-            total: total,
-            serviced_by: finalStaffString
-        };
-
-        try {
-            const { data, error } = await supabaseClient.from('receipts').insert([receiptPayload]).select();
-            if (error) throw error;
-
-            document.getElementById('receiptDate').innerText = new Date(data[0].created_at).toLocaleString();
-            document.getElementById('receiptItems').innerHTML = receiptItemsHTML;
-            document.getElementById('receiptSubtotal').innerText = `$${subtotal.toFixed(2)}`;
-            document.getElementById('receiptTax').innerText = `$${tax.toFixed(2)}`;
-            document.getElementById('receiptTotal').innerText = `$${total.toFixed(2)}`;
-
-            if (placeholderText) placeholderText.style.display = 'none';
-            if (receiptBox) receiptBox.style.display = 'block';
-            if (submitBtn) submitBtn.textContent = 'Generate & Save Receipt';
-            
-            // Wipe input selections back to clean baseline maps
-            if (miscInput) miscInput.value = '';
-            if (masterStaffSelect) masterStaffSelect.value = '';
-            
-            checkedBoxes.forEach(cb => {
-                cb.checked = false;
-                const wrapper = cb.closest('.menu-item-row');
-                wrapper.querySelector('.controls-wrapper-box').style.display = 'none';
-                wrapper.querySelector('.qty-field').value = 1;
-                wrapper.querySelector('.staff-inline-field').value = "";
-            });
-        } catch (err) {
-            alert('Database Transaction Error: ' + err.message);
-            if (submitBtn) submitBtn.textContent = 'Generate & Save Receipt';
-        }
-    });
-}
+    } catch (err) {
+        alert('Database Sync Error: ' + err.message);
+        submitBtn.textContent = 'Generate & Save Receipt';
+    }
+});
 
 window.addEventListener('load', initSupabase);
