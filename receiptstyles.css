@@ -44,17 +44,15 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
 /* Visibility Classes controlled by JS state switches */
 .app-workspace-hidden {
     display: none;
-    opacity: 0;
 }
 .app-workspace-visible {
     display: block;
-    opacity: 1;
 }
 
 /* Structural Split System Grid Layout */
 .app-layout {
     display: grid;
-    grid-template-columns: 580px 1fr; /* Expanded slightly to ensure no text wrapping on inputs */
+    grid-template-columns: 580px 1fr;
     gap: 24px;
     align-items: start;
 }
@@ -108,13 +106,7 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     display: flex;
     align-items: center;
     gap: 12px;
-    opacity: 0;
-    visibility: hidden;
-    transition: opacity 0.15s ease;
-}
-.controls-wrapper-box.active {
-    opacity: 1;
-    visibility: visible;
+    display: none; /* Controlled explicitly via JS block overrides */
 }
 
 .qty-input-wrapper { display: flex; align-items: center; gap: 4px; }
@@ -123,7 +115,7 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
 
 .staff-inline-wrapper { display: flex; align-items: center; gap: 4px; }
 .staff-inline-wrapper span { font-size: 0.8rem; color: #64748b; font-weight: 600; }
-.staff-inline-field { padding: 4px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.85rem; max-width: 125px; background-color: #fff; }
+.staff-inline-field { padding: 4px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.85rem; width: 125px; background-color: #fff; color: #334155; }
 
 /* Shared standard form fields */
 .form-group { margin-bottom: 16px; }
@@ -142,7 +134,7 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
 .receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 12px; margin-bottom: 16px; }
 .receipt-header h3 { margin: 0 0 4px 0; letter-spacing: 1px; }
 .receipt-row { display: flex; justify-content: space-between; margin: 8px 0; }
-.receipt-staff-line { font-size: 0.8em; color: #4F46E5; margin-top: -4px; margin-bottom: 6px; padding-left: 12px; font-style: italic; font-weight: bold; }
+.receipt-staff-line { font-size: 0.8rem; color: #4F46E5; margin-top: -4px; margin-bottom: 6px; padding-left: 12px; font-style: italic; font-weight: bold; }
 .divider { border-top: 1px dashed #000; margin: 12px 0; }
 .total-row { font-weight: bold; font-size: 1.15em; }
 .placeholder { color: #64748b; text-align: center; padding: 60px 0; font-style: italic; }
