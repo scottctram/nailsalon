@@ -146,19 +146,18 @@ textarea.form-control {
     border-radius: 12px; 
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
     border: 1px solid #e2e8f0; 
-    overflow-x: auto; /* Enables smooth sidescrolling on smaller screen windows */
+    overflow-x: auto; 
 }
 
 .calendar-header { 
     display: grid; 
-    /* 80px timeline track + 8 equal technician content tracks */
     grid-template-columns: 80px repeat(8, minmax(120px, 1fr)); 
     border-bottom: 2px solid #e2e8f0; 
     background-color: #f8fafc; 
     text-align: center; 
 }
 .header-cell { 
-    padding: 14px; 
+    padding: 10px 4px; 
     border-right: 1px solid #e2e8f0; 
     color: #475569; 
     font-weight: 600; 
@@ -166,6 +165,11 @@ textarea.form-control {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 4px;
 }
 .header-cell:last-child { 
     border-right: none; 
@@ -180,10 +184,8 @@ textarea.form-control {
 }
 .calendar-body { 
     display: grid; 
-    /* Matches header track definitions perfectly */
     grid-template-columns: 80px repeat(8, minmax(120px, 1fr));
     position: relative; 
-    /* Extended workspace: 12 map hours (09:00 to 21:00) * 60px/hour = 720px */
     height: 720px; 
     background-image: linear-gradient(#e2e8f0 1px, transparent 1px); 
     background-size: 100% 60px; 
@@ -255,60 +257,58 @@ textarea.form-control {
     text-overflow: ellipsis;
 }
 
-
-/* Staff Header Block Off Styling Elements */
-.header-toggle-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 4px;
-    margin-top: 6px;
-}
-.block-off-checkbox {
-    width: 16px;
-    height: 16px;
-    accent-color: #0f172a; /* Solid clean deep black tint */
-    cursor: pointer;
-}
-.block-off-checkbox:disabled {
-    cursor: not-allowed;
-    opacity: 0.4;
-}
-.header-toggle-container span {
+/* ==========================================================================
+   7. Staff Blocking / Day-off Matrix UI Overlays
+   ========================================================================== */
+.btn-block-header {
+    background-color: #f1f5f9;
+    color: #475569;
+    border: 1px solid #cbd5e1;
+    padding: 2px 8px;
+    border-radius: 4px;
     font-size: 0.72rem;
     font-weight: bold;
-    color: #64748b;
+    cursor: pointer;
     text-transform: uppercase;
+    transition: all 0.15s ease;
+}
+.btn-block-header:hover {
+    background-color: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+}
+.btn-block-header.is-blocked {
+    background-color: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+}
+.btn-block-header:disabled {
+    background-color: #e2e8f0;
+    color: #94a3b8;
+    border-color: #e2e8f0;
+    cursor: not-allowed;
 }
 
-
-/* ==========================================================================
-   7. Day Off Overlay
-   ========================================================================== */
 .blocked-day-overlay {
     position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
+    top: 0; left: 0; width: 100%; height: 100%;
     background: repeating-linear-gradient(
         45deg,
-        rgba(15, 23, 42, 0.04),
-        rgba(15, 23, 42, 0.04) 10px,
-        rgba(15, 23, 42, 0.08) 10px,
-        rgba(15, 23, 42, 0.08) 20px
+        rgba(15, 23, 42, 0.05),
+        rgba(15, 23, 42, 0.05) 10px,
+        rgba(15, 23, 42, 0.09) 10px,
+        rgba(15, 23, 42, 0.09) 20px
     );
     border-left: 4px solid #0f172a;
-    box-sizing: border-box;
     display: flex;
     justify-content: center;
     align-items: center;
+    z-index: 5;
 }
 .blocked-badge {
     background-color: #0f172a;
     color: #ffffff;
-    font-family: inherit;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: bold;
     padding: 6px 12px;
     border-radius: 20px;
