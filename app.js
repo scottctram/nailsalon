@@ -50,37 +50,33 @@ const logoutBtn = document.getElementById('logoutBtn');
 
 // Initialize Dynamic HTML Dropdowns & Matrix Columns
 function initFormElements() {
-    if (!dateInput.value) {
+    if(!dateInput.value) {
         dateInput.value = new Date().toISOString().split('T')[0];
     }
     
+    // Clear out setup duplicates before populating
     staffSelect.innerHTML = '';
     serviceSelect.innerHTML = '';
-    calendarHeader.innerHTML = '<div class="header-cell" style="font-size: 0.85em; display: flex; align-items: center; justify-content: center;">Timeline</div>';
     timeColumn.innerHTML = '';
-
-    // Populate standard input options
-    STAFF_MEMBERS.forEach(s => { 
-        staffSelect.appendChild(new Option(s, s)); 
-    });
     
     Object.keys(SERVICES).forEach(s => serviceSelect.appendChild(new Option(`${s} (${SERVICES[s]} min)`, s)));
     HOURS.forEach(h => timeColumn.appendChild(Object.assign(document.createElement('div'), {className: 'time-slot', textContent: h})));
+    
+    STAFF_MEMBERS.forEach(s => { 
+        staffSelect.appendChild(new Option(s, s)); 
+    });
 }
 
-// Renders the checkboxes up top depending on live scheduling allocation profiles
-function renderHeaderToggles() {
-    // Preserve first "Timeline" block element
-    const timelineCell = calendarHeader.firstElementChild;
-    calendarHeader.innerHTML = '';
-    calendarHeader.appendChild(timelineCell);
-
+// Re-render the calendar top header cell array with block toggles
+function updateCalendarHeaderUI() {
+    calendarHeader.innerHTML = '<div class="header-cell" style="font-size: 0.85em;">Timeline</div>';
+    
     STAFF_MEMBERS.forEach(staffName => {
-        const headerCell = document.createElement('div');
-        headerCell.className = 'header-cell';
+        const cell = document.createElement('div');
+        cell.className = 'header-cell';
         
-        // Audit presence of existing functional client appointments
-        const activeAppointments = appointments.filter(a => 
+        // Count regular bookings for this person today (exclude blocks)
+        const activeBookings = appointments.filter(a => 
             a.date === dateInput.value && 
             a.staff === staffName && 
             a.customer !== 'STAFF_BLOCKED'
@@ -91,61 +87,71 @@ function renderHeaderToggles() {
             a.staff === staffName && 
             a.customer === 'STAFF_BLOCKED'
         );
-
-        headerCell.innerHTML = `
-            <div style="font-weight: bold;">${staffName}</div>
-            <div class="header-toggle-container">
-                <input type="checkbox" class="block-off-checkbox" id="block_${staffName}" ${isBlocked ? 'checked' : ''} ${activeAppointments.length > 0 ? 'disabled title="Cannot block: worker has scheduled appointments"' : 'title="Toggle Block Day Off"'}>
-                <span>Block</span>
-            </div>
-        `;
-
-        // Intercept inline click mutations securely
-        const checkbox = headerCell.querySelector('.block-off-checkbox');
-        checkbox.addEventListener('change', () => handleBlockToggle(staffName, checkbox.checked));
-
-        calendarHeader.appendChild(headerCell);
+        
+        const titleText = document.createElement('div');
+        titleText.textContent = staffName;
+        cell.appendChild(titleText);
+        
+        const blockBtn = document.createElement('button');
+        blockBtn.type = 'button';
+        blockBtn.className = 'btn-block-header';
+        
+        if (isBlocked) {
+            blockBtn.textContent = 'Unblock';
+            blockBtn.classList.add('is-blocked');
+        } else {
+            blockBtn.textContent = 'Block';
+        }
+        
+        // Disable blocking if there are active bookings
+        if (activeBookings.length > 0) {
+            blockBtn.disabled = true;
+            blockBtn.title = 'Cannot block: Technician already has appointments scheduled today.';
+        } else {
+            blockBtn.title = isBlocked ? 'Make technician available' : 'Block technician off for the day';
+        }
+        
+        blockBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            toggleStaffBlock(staffName, isBlocked);
+        });
+        
+        cell.appendChild(blockBtn);
+        calendarHeader.appendChild(cell);
     });
 }
 
-// Processes day off overrides straight to Supabase
-async function handleBlockToggle(staffName, shouldBlock) {
-    const selectedDate = dateInput.value;
-
-    if (shouldBlock) {
-        // Build a special 9:00 AM to 9:00 PM blocker transaction block
-        const blockPayload = {
-            date: selectedDate,
+// Action utility pipeline to write or remove blocker transactions from Supabase
+async function toggleStaffBlock(staffName, wasBlocked) {
+    const activeDate = dateInput.value;
+    
+    if (!wasBlocked) {
+        const payload = {
+            date: activeDate,
             customer: 'STAFF_BLOCKED',
             staff: staffName,
-            service: 'Day Off / Unscheduled',
+            service: 'Day Off',
             start_time: '09:00',
             end_time: '21:00',
-            notes: 'Technician blocked directly from header matrices'
+            notes: 'System level column block overlay auto-lock'
         };
-
-        const { data, error } = await supabaseClient.from('appointments').insert([blockPayload]).select();
+        const { data, error } = await supabaseClient.from('appointments').insert([payload]).select();
         if (!error) {
             appointments.push(data[0]);
-        } else {
-            alert('Could not sync block parameters: ' + error.message);
+            renderCalendarGrid();
+            updateFormUI();
         }
     } else {
-        // Wipe tracking blocks out of cloud row limits
-        const targetBlock = appointments.find(a => a.date === selectedDate && a.staff === staffName && a.customer === 'STAFF_BLOCKED');
+        const targetBlock = appointments.find(a => a.date === activeDate && a.staff === staffName && a.customer === 'STAFF_BLOCKED');
         if (targetBlock) {
             const { error } = await supabaseClient.from('appointments').delete().eq('id', targetBlock.id);
             if (!error) {
                 appointments = appointments.filter(a => a.id !== targetBlock.id);
-            } else {
-                alert('Could not remove block parameters: ' + error.message);
+                renderCalendarGrid();
+                updateFormUI();
             }
         }
     }
-    
-    // Repaint interfaces instantly
-    renderCalendarGrid();
-    updateFormUI();
 }
 
 // Calculate Accurate Service End Boundary Windows
@@ -189,13 +195,17 @@ function updateFormUI() {
         durationPreview.innerHTML = `<strong>Duration Span:</strong> ${startTimeInput.value} to ${calculateEndTime(startTimeInput.value, serviceSelect.value)}`;
     }
     
-    // Check if employee is completely blocked off for the day
-    const employeeIsBlocked = appointments.some(a => a.date === dateInput.value && a.staff === staffSelect.value && a.customer === 'STAFF_BLOCKED');
+    // Check if the technician currently selected in the form is blocked off
+    const isTargetStaffBlocked = appointments.some(a => 
+        a.date === dateInput.value && 
+        a.staff === staffSelect.value && 
+        a.customer === 'STAFF_BLOCKED'
+    );
     
-    if (employeeIsBlocked) {
+    if (isTargetStaffBlocked) {
         warningBanner.style.display = 'block';
-        warningBanner.innerHTML = `⚠️ <strong>Technician Unavailable:</strong> ${staffSelect.value} has been blocked off for a Day Off today.`;
-        submitBtn.textContent = 'Technician Locked';
+        warningBanner.innerHTML = `⚠️ <strong>Technician Unavailable:</strong> ${staffSelect.value} is blocked off for a Day Off today.`;
+        submitBtn.textContent = 'Technician Unavailable';
         submitBtn.className = 'btn-submit btn-warning-state';
         submitBtn.disabled = true;
         return;
@@ -217,9 +227,8 @@ function updateFormUI() {
 }
 
 function startEditing(appt) {
-    // Prevent opening default edit panels on locked day cards
-    if (appt.customer === 'STAFF_BLOCKED') return;
-
+    if (appt.customer === 'STAFF_BLOCKED') return; // Do not edit blocker tiles
+    
     editingId = appt.id;
     dateInput.value = appt.date;
     customerInput.value = appt.customer;
@@ -246,27 +255,24 @@ function resetForm() {
 function renderCalendarGrid() {
     staffTrackContainer.innerHTML = '';
     
-    // Refresh column header checkboxes synchronously on page draws
-    renderHeaderToggles();
-
+    // Refresh header indicators live alongside grid redraws
+    updateCalendarHeaderUI();
+    
     STAFF_MEMBERS.forEach(staffName => {
         const columnTrack = document.createElement('div');
         columnTrack.className = 'staff-column';
         
-        const dayEntries = appointments.filter(a => a.date === dateInput.value && a.staff === staffName);
+        const staffDayEvents = appointments.filter(a => a.date === dateInput.value && a.staff === staffName);
+        const isBlockedOff = staffDayEvents.some(a => a.customer === 'STAFF_BLOCKED');
         
-        // Look for the special day-off indicator row
-        const isBlockedOff = dayEntries.some(a => a.customer === 'STAFF_BLOCKED');
-
         if (isBlockedOff) {
-            // Paint full elegant striped block over the track channel area
-            const blockOverlay = document.createElement('div');
-            blockOverlay.className = 'blocked-day-overlay';
-            blockOverlay.innerHTML = `<div class="blocked-badge">DAY OFF</div>`;
-            columnTrack.appendChild(blockOverlay);
+            // Paint striped overlay layout canvas directly onto track channel
+            const overlay = document.createElement('div');
+            overlay.className = 'blocked-day-overlay';
+            overlay.innerHTML = '<div class="blocked-badge">Day Off</div>';
+            columnTrack.appendChild(overlay);
         } else {
-            // Draw regular standard appointment floating nodes
-            dayEntries.forEach(appt => {
+            staffDayEvents.forEach(appt => {
                 const rawStart = appt.start_time || appt.startTime;
                 const rawEnd = appt.end_time || appt.endTime;
 
@@ -294,7 +300,7 @@ function renderCalendarGrid() {
     });
 }
 
-// Fetch calendar data from database
+// Fetch calendar data from database (Only works if session is authorized)
 async function fetchData() {
     const { data, error } = await supabaseClient.from('appointments').select('*');
     if (!error) {
@@ -304,25 +310,30 @@ async function fetchData() {
     }
 }
 
-async function showDashboard() {
+// Show schedule dashboard interface layer
+function showDashboard() {
     loginOverlay.style.display = 'none';
     appWorkspace.style.opacity = '1';
     appWorkspace.style.pointerEvents = 'auto';
     initFormElements();
-    await fetchData();
+    fetchData();
 }
 
+// Show login layer interface template block
 function showLogin() {
     loginOverlay.style.display = 'flex';
     appWorkspace.style.opacity = '0';
     appWorkspace.style.pointerEvents = 'none';
 }
 
+// Connect application to backend database layer
 async function initSupabase() {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    
+    // Check if user is already remembered locally from a past session
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
-        await showDashboard();
+        showDashboard();
     } else {
         showLogin();
     }
@@ -344,10 +355,12 @@ loginForm.addEventListener('submit', async function(e) {
         loginError.style.display = 'block';
         loginBtn.textContent = 'Sign In';
     } else {
-        await showDashboard();
+        loginBtn.textContent = 'Sign In';
+        showDashboard();
     }
 });
 
+// LOGOUT HANDLER LINK
 logoutBtn.addEventListener('click', async function() {
     await supabaseClient.auth.signOut();
     appointments = [];
@@ -356,6 +369,7 @@ logoutBtn.addEventListener('click', async function() {
     showLogin();
 });
 
+// Form Submit Pipeline (Handles both New Bookings and Updates)
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
     if (checkConflict() && !forceConfirmActive) {
@@ -394,6 +408,7 @@ form.addEventListener('submit', async function(e) {
     }
 });
 
+// Delete Execution Link Interceptions
 deleteBtn.addEventListener('click', async function() {
     if (!editingId) return;
     if (confirm(`Delete appointment for ${customerInput.value}?`)) {
