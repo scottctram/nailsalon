@@ -51,33 +51,16 @@
                         <select id="servicedBy" class="form-control"></select>
                     </div>
 
-                    <div class="form-group">
-                        <div class="item-qty-row">
-                            <div>
-                                <label for="productSelect">Select Base Treatment / Product</label>
-                                <select id="productSelect" class="form-control" required></select>
-                            </div>
-                            <div>
-                                <label for="productQty">Qty</label>
-                                <input type="number" id="productQty" class="form-control" min="1" max="20" value="1" required>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="menu-section-title">Nails & Hands Care</div>
+                    <div id="nailServicesContainer" class="checkbox-menu-grid"></div>
 
-                    <div class="form-group">
-                        <div class="item-qty-row">
-                            <div>
-                                <label for="serviceSelect">Add-on Service Tier (Optional)</label>
-                                <select id="serviceSelect" class="form-control"></select>
-                            </div>
-                            <div>
-                                <label for="serviceQty">Qty</label>
-                                <input type="number" id="serviceQty" class="form-control" min="1" max="20" value="1" required>
-                            </div>
-                        </div>
-                    </div>
+                    <div class="menu-section-title">Waxing & Threading</div>
+                    <div id="waxingServicesContainer" class="checkbox-menu-grid"></div>
 
-                    <div class="form-group">
+                    <div class="menu-section-title">Lashes, Facials & Extra Add-ons</div>
+                    <div id="otherServicesContainer" class="checkbox-menu-grid"></div>
+
+                    <div class="form-group" style="margin-top: 24px;">
                         <label for="miscInput">Miscellaneous Flat Amount ($)</label>
                         <input type="number" id="miscInput" class="form-control" min="0" step="0.01" placeholder="0.00">
                     </div>
@@ -102,7 +85,7 @@
                     <div class="divider"></div>
                     <div class="receipt-row total-row"><span>TOTAL:</span><span id="receiptTotal">$0.00</span></div>
                 </div>
-                <p id="placeholderText" class="placeholder">Complete details on the form to issue a live invoice tracking receipt block.</p>
+                <p id="placeholderText" class="placeholder">Select treatments on the menu to construct a live invoice tracking block.</p>
             </div>
         </div>
     </div>
