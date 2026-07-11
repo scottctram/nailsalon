@@ -266,12 +266,41 @@ function renderCalendarGrid() {
         const isBlockedOff = staffDayEvents.some(a => a.customer === 'STAFF_BLOCKED');
         
         if (isBlockedOff) {
-            // Paint striped overlay layout canvas directly onto track channel
             const overlay = document.createElement('div');
             overlay.className = 'blocked-day-overlay';
             overlay.innerHTML = '<div class="blocked-badge">Day Off</div>';
             columnTrack.appendChild(overlay);
         } else {
+            // 🌟 NEW FUNCTIONALITY: Empty Track Click Handler to Auto-Fill Form
+            columnTrack.addEventListener('click', function(e) {
+                // Ensure clicks directly on child element appointment-blocks don't trigger a new fill action
+                if (e.target !== columnTrack) return;
+                
+                // Clear any leftover edit state variables safely
+                resetForm();
+                
+                // Calculate position relative to timeline track ($60px height per hour = 1px per minute)
+                const clickY = e.offsetY;
+                const totalMinutesClicked = clickY;
+                
+                // Round downwards to the nearest standard 15-minute operational interval block
+                const roundedMinutes = Math.floor(totalMinutesClicked / 15) * 15;
+                
+                const clickHour = START_HOUR + Math.floor(roundedMinutes / 60);
+                const clickMinute = roundedMinutes % 60;
+                
+                const formattedTime = `${clickHour.toString().padStart(2, '0')}:${clickMinute.toString().padStart(2, '0')}`;
+                
+                // Autofill left workspace controllers instantly
+                staffSelect.value = staffName;
+                startTimeInput.value = formattedTime;
+                
+                // Auto-focus name field to prompt immediate customer input action
+                customerInput.focus();
+                
+                updateFormUI();
+            });
+
             staffDayEvents.forEach(appt => {
                 const rawStart = appt.start_time || appt.startTime;
                 const rawEnd = appt.end_time || appt.endTime;
@@ -292,7 +321,10 @@ function renderCalendarGrid() {
                     ${appt.notes ? `<div class="appointment-notes" title="${appt.notes}">📝 ${appt.notes}</div>` : ''}
                 `;
                 
-                block.addEventListener('click', () => startEditing(appt));
+                block.addEventListener('click', (e) => {
+                    e.stopPropagation(); // Stops the container timeline click handler from firing
+                    startEditing(appt);
+                });
                 columnTrack.appendChild(block);
             });
         }
