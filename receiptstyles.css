@@ -112,7 +112,7 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
 .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #475569; font-size: 0.9rem; }
 .form-control { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 0.95rem; background-color: #fff; color: #334155; }
 
-/* 💳 Payment Selector Panel Module Styles */
+/* 💳 Payment Method Radio Toggle Panels */
 .payment-method-box {
     margin-top: 24px;
     background-color: #f8fafc;
@@ -125,33 +125,30 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
-.toggle-option {
-    position: relative;
-    cursor: pointer;
-}
-.toggle-option input[type="radio"] {
-    position: absolute;
-    opacity: 0;
-    width: 0; height: 0;
-}
+.toggle-option { position: relative; cursor: pointer; }
+.toggle-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
 .toggle-label {
-    display: block;
-    text-align: center;
-    padding: 10px;
-    background-color: #ffffff;
-    border: 1px solid #cbd5e1;
-    border-radius: 6px;
-    font-weight: 600;
-    font-size: 0.9rem;
-    color: #475569;
-    transition: all 0.2s;
-    user-select: none;
+    display: block; text-align: center; padding: 10px; background-color: #ffffff;
+    border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; font-size: 0.9rem;
+    color: #475569; transition: all 0.2s; user-select: none;
 }
 .toggle-option input[type="radio"]:checked + .toggle-label {
-    background-color: #0f172a;
-    color: #ffffff;
-    border-color: #0f172a;
+    background-color: #0f172a; color: #ffffff; border-color: #0f172a;
 }
+
+/* Post-Generation Loyalty Modifier Card */
+.loyalty-modifier-card {
+    background-color: #eff6ff;
+    border: 1px solid #bfdbfe;
+    padding: 16px;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    max-width: 420px;
+    margin-left: auto;
+    margin-right: auto;
+}
+.loyalty-modifier-card h4 { margin: 0 0 6px 0; color: #1e40af; font-size: 1rem; }
+.loyalty-modifier-card p { margin: 0 0 12px 0; color: #1e3a8a; font-size: 0.85rem; line-height: 1.4; }
 
 /* Functional Form Call Buttons */
 .btn-submit { width: 100%; padding: 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
