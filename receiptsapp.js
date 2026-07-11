@@ -2,6 +2,7 @@ const SUPABASE_URL = 'https://rdfxkunntwffxibaoqnk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_lYXIa2nPYnpn6CGpPHNVEw_yDOp0P13';
 
 const HST_RATE = 0.13;
+const CASH_DISCOUNT_RATE = 0.10; // 10% Cash discount
 const STAFF_MEMBERS = ['Anna', 'Kim', 'Rose', 'Maira', 'Yuzu', 'Komal', 'Ruby', 'Linda'];
 
 // CATEGORIZED PRICING CATALOG DICTIONARY
@@ -64,6 +65,7 @@ const SALON_MENU = {
 };
 
 let supabaseClient = null;
+let computedFormTotal = 0; // Track final total for dynamic live change calculations
 
 // Document Nodes
 const receiptForm = document.getElementById('receiptForm');
@@ -72,6 +74,11 @@ const miscInput = document.getElementById('miscInput');
 const submitBtn = document.getElementById('submitBtn');
 const receiptBox = document.getElementById('receiptBox');
 const placeholderText = document.getElementById('placeholderText');
+
+// Payment DOM elements
+const cashCalculatorGroup = document.getElementById('cashCalculatorGroup');
+const cashTenderedInput = document.getElementById('cashTendered');
+const liveChangeDueDisplay = document.getElementById('liveChangeDue');
 
 const loginForm = document.getElementById('loginForm');
 const loginEmail = document.getElementById('loginEmail');
@@ -93,7 +100,7 @@ function createCheckboxRow(containerId, itemMap) {
         const row = document.createElement('div');
         row.className = 'menu-item-row';
         row.innerHTML = `
-            <input type="checkbox" id="${uniqueId}" data-name="${name}" data-price="${price}">
+            <input type="checkbox" id="${uniqueId}" data-name="${name}" data-price="${price}" class="service-checkbox">
             <label for="${uniqueId}">${name} ($${price.toFixed(2)})</label>
             <div class="qty-input-wrapper" id="wrapper_${uniqueId}">
                 <span>Qty:</span>
@@ -113,7 +120,9 @@ function createCheckboxRow(containerId, itemMap) {
                 qtyWrapper.classList.remove('active');
                 qtyField.value = 1;
             }
+            calculateLiveTotals(); // Recalculate totals immediately when selections change
         });
+        qtyField.addEventListener('input', calculateLiveTotals);
     });
 }
 
@@ -126,6 +135,52 @@ function initFormElements() {
     createCheckboxRow('waxingServicesContainer', SALON_MENU.waxing);
     createCheckboxRow('otherServicesContainer', SALON_MENU.other);
 }
+
+// Live calculation engine to compute cash changes as your brother types them
+function calculateLiveTotals() {
+    const checkedBoxes = document.querySelectorAll('.service-checkbox:checked');
+    const miscPrice = parseFloat(miscInput.value) || 0.00;
+    const isCash = document.querySelector('input[name="paymentMethod"]:checked').value === 'Cash';
+
+    let subtotal = 0;
+    checkedBoxes.forEach(cb => {
+        const price = parseFloat(cb.getAttribute('data-price'));
+        const qtyField = document.getElementById(`qty_${cb.id}`);
+        const qty = parseInt(qtyField.value) || 1;
+        subtotal += price * qty;
+    });
+    subtotal += miscPrice;
+
+    // Apply the conditional 10% Cash discount on the subtotal
+    const discount = isCash ? (subtotal * CASH_DISCOUNT_RATE) : 0;
+    const subtotalAfterDiscount = subtotal - discount;
+    const tax = subtotalAfterDiscount * HST_RATE;
+    
+    computedFormTotal = subtotalAfterDiscount + tax;
+
+    // Update Change Due box live
+    if (isCash) {
+        const tendered = parseFloat(cashTenderedInput.value) || 0;
+        const changeDue = Math.max(0, tendered - computedFormTotal);
+        liveChangeDueDisplay.textContent = `$${changeDue.toFixed(2)}`;
+        liveChangeDueDisplay.style.color = tendered >= computedFormTotal ? '#16a34a' : '#dc2626';
+    }
+}
+
+// Payment Option Toggle Listeners
+document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
+    radio.addEventListener('change', function() {
+        if (this.value === 'Cash') {
+            cashCalculatorGroup.style.display = 'block';
+        } else {
+            cashCalculatorGroup.style.display = 'none';
+            cashTenderedInput.value = '';
+        }
+        calculateLiveTotals();
+    });
+});
+miscInput.addEventListener('input', calculateLiveTotals);
+cashTenderedInput.addEventListener('input', calculateLiveTotals);
 
 function showDashboard() {
     loginOverlay.style.display = 'none';
@@ -174,11 +229,19 @@ logoutBtn.addEventListener('click', async function() {
 receiptForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
-    const checkedBoxes = document.querySelectorAll('.checkbox-menu-grid input[type="checkbox"]:checked');
+    const checkedBoxes = document.querySelectorAll('.service-checkbox:checked');
     const miscPrice = parseFloat(miscInput.value) || 0.00;
 
     if (checkedBoxes.length === 0 && miscPrice === 0) {
         alert('Please select at least one check item from the service list.');
+        return;
+    }
+
+    const payMethod = document.querySelector('input[name="paymentMethod"]:checked').value;
+    const tenderedAmount = parseFloat(cashTenderedInput.value) || 0;
+
+    if (payMethod === 'Cash' && tenderedAmount < computedFormTotal) {
+        alert(`Insufficient cash entered. Total required is $${computedFormTotal.toFixed(2)}`);
         return;
     }
 
@@ -209,22 +272,34 @@ receiptForm.addEventListener('submit', async function(e) {
 
     if (miscPrice > 0) {
         subtotal += miscPrice;
-        receiptItemsHTML += `<div class="receipt-row"><span>Misc Amount</span><span>$${miscPrice.toFixed(2)}</span></div>`;
+        receiptItemsHTML += `
+            <div class="receipt-row">
+                <span>Misc Amount</span>
+                <span>$${miscPrice.toFixed(2)}</span>
+            </div>
+        `;
         selectedItemsList.push(`Misc: $${miscPrice.toFixed(2)}`);
     }
 
-    const tax = subtotal * HST_RATE;
-    const total = subtotal + tax;
+    // Calculation Matrix Stack
+    const cashDiscount = payMethod === 'Cash' ? (subtotal * CASH_DISCOUNT_RATE) : 0;
+    const netSubtotal = subtotal - cashDiscount;
+    const tax = netSubtotal * HST_RATE;
+    const finalTotal = netSubtotal + tax;
+    const changeDue = payMethod === 'Cash' ? (tenderedAmount - finalTotal) : 0;
+
+    // Append payment profile directly onto audit summaries for lookups
+    selectedItemsList.push(`[Paid by ${payMethod}]`);
 
     const receiptPayload = {
         product_name: selectedItemsList.join(', ').substring(0, 250),
         product_price: subtotal - miscPrice,
-        service_name: "Multi-Selection Checkout",
+        service_name: `Multi-Selection Checkout (${payMethod})`,
         service_price: 0.00,
         misc_price: miscPrice,
         subtotal: subtotal,
         tax: tax,
-        total: total,
+        total: finalTotal,
         serviced_by: chosenStaff
     };
 
@@ -240,17 +315,41 @@ receiptForm.addEventListener('submit', async function(e) {
             staffDisplay.style.display = 'block';
         } else { staffDisplay.style.display = 'none'; }
         
+        // Render Line Items and Discounts on Receipt Canvas
         document.getElementById('receiptItems').innerHTML = receiptItemsHTML;
         document.getElementById('receiptSubtotal').innerText = `$${subtotal.toFixed(2)}`;
+        
+        const discountRow = document.getElementById('discountReceiptRow');
+        if (cashDiscount > 0) {
+            document.getElementById('receiptDiscount').innerText = `-$${cashDiscount.toFixed(2)}`;
+            discountRow.style.display = 'flex';
+        } else {
+            discountRow.style.display = 'none';
+        }
+
         document.getElementById('receiptTax').innerText = `$${tax.toFixed(2)}`;
-        document.getElementById('receiptTotal').innerText = `$${total.toFixed(2)}`;
+        document.getElementById('receiptTotal').innerText = `$${finalTotal.toFixed(2)}`;
+
+        // Handle Cash change return breakdown rows
+        const receiptCashDetails = document.getElementById('receiptCashDetails');
+        if (payMethod === 'Cash') {
+            document.getElementById('receiptTendered').innerText = `$${tenderedAmount.toFixed(2)}`;
+            document.getElementById('receiptChange').innerText = `$${changeDue.toFixed(2)}`;
+            receiptCashDetails.style.display = 'block';
+        } else {
+            receiptCashDetails.style.display = 'none';
+        }
 
         placeholderText.style.display = 'none';
         receiptBox.style.display = 'block';
         submitBtn.textContent = 'Generate & Save Receipt';
         
-        // Reset states cleanly
+        // Reset states cleanly back to zero configurations
         miscInput.value = '';
+        cashTenderedInput.value = '';
+        document.getElementById('cashCalculatorGroup').style.display = 'none';
+        document.querySelector('input[name="paymentMethod"][value="Card"]').checked = true;
+        
         checkedBoxes.forEach(cb => {
             cb.checked = false;
             document.getElementById(`wrapper_${cb.id}`).classList.remove('active');
