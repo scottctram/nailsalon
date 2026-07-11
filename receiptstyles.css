@@ -101,7 +101,8 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     opacity: 0; visibility: hidden; transition: opacity 0.15s ease;
 }
 .qty-input-wrapper.active {
-    opacity: 1; visibility: visible;
+    opacity: 1;
+    visibility: visible;
 }
 .qty-input-wrapper span { font-size: 0.8rem; color: #64748b; font-weight: 600; }
 .qty-field { width: 50px; padding: 4px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.9rem; text-align: center; }
@@ -110,6 +111,47 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
 .form-group { margin-bottom: 16px; }
 .form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #475569; font-size: 0.9rem; }
 .form-control { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 0.95rem; background-color: #fff; color: #334155; }
+
+/* 💳 Payment Selector Panel Module Styles */
+.payment-method-box {
+    margin-top: 24px;
+    background-color: #f8fafc;
+    border: 1px solid #cbd5e1;
+    padding: 16px;
+    border-radius: 8px;
+}
+.toggle-group {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+.toggle-option {
+    position: relative;
+    cursor: pointer;
+}
+.toggle-option input[type="radio"] {
+    position: absolute;
+    opacity: 0;
+    width: 0; height: 0;
+}
+.toggle-label {
+    display: block;
+    text-align: center;
+    padding: 10px;
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #475569;
+    transition: all 0.2s;
+    user-select: none;
+}
+.toggle-option input[type="radio"]:checked + .toggle-label {
+    background-color: #0f172a;
+    color: #ffffff;
+    border-color: #0f172a;
+}
 
 /* Functional Form Call Buttons */
 .btn-submit { width: 100%; padding: 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; }
