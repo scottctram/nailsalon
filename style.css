@@ -215,6 +215,7 @@ textarea.form-control {
     position: relative; 
     height: 100%; 
     border-right: 1px solid #e2e8f0; 
+    cursor: cell; /* 🌟 Visual cue signifying empty tracks are interactive */
 }
 .staff-column:last-child { 
     border-right: none; 
@@ -304,6 +305,7 @@ textarea.form-control {
     justify-content: center;
     align-items: center;
     z-index: 5;
+    cursor: not-allowed; /* Overrides column cursor when day off is active */
 }
 .blocked-badge {
     background-color: #0f172a;
