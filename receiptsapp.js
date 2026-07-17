@@ -4,7 +4,7 @@ const SUPABASE_ANON_KEY = 'sb_publishable_lYXIa2nPYnpn6CGpPHNVEw_yDOp0P13';
 const HST_RATE = 0.13;
 const STAFF_MEMBERS = ['Anna', 'Kim', 'Rose', 'Maira', 'Yuzu', 'Komal', 'Ruby', 'Linda'];
 
-// CATEGORIZED PRICING CATALOG DICTIONARY
+// CATEGORIZED PRICING CATALOG DICTIONARY[cite: 11]
 const SALON_MENU = {
     nails: {
         "Full Set (No Colour)": 35.00,
@@ -64,24 +64,28 @@ const SALON_MENU = {
 };
 
 let supabaseClient = null;
-let currentReceiptId = null; // Memory anchor to track active receipt row to update
-let activeReceiptCache = null; // Cache snapshot values of baseline run items
+let currentReceiptId = null; // Memory anchor to track active receipt row to update[cite: 11]
+let activeReceiptCache = null; // Cache snapshot values of baseline run items[cite: 11]
+let finalBillTotalValue = 0; // Tracks running total balance for cash-change arithmetic routines
 
-// Document Nodes
+// Document Nodes[cite: 11]
 const receiptForm = document.getElementById('receiptForm');
 const servicedBySelect = document.getElementById('servicedBy');
 const miscInput = document.getElementById('miscInput');
 const submitBtn = document.getElementById('submitBtn');
+const resetFormBtn = document.getElementById('resetFormBtn');
 const receiptBox = document.getElementById('receiptBox');
 const placeholderText = document.getElementById('placeholderText');
 
-// Payment & Loyalty Nodes
+// Payment & Loyalty Nodes[cite: 11]
 const cashCalculatorGroup = document.getElementById('cashCalculatorGroup');
 const cashTenderedInput = document.getElementById('cashTendered');
 const liveChangeDueDisplay = document.getElementById('liveChangeDue');
 const loyaltyAdjustmentBox = document.getElementById('loyaltyAdjustmentBox');
 const loyaltyPercentInput = document.getElementById('loyaltyPercent');
 const applyLoyaltyBtn = document.getElementById('applyLoyaltyBtn');
+const receiptActionToolbar = document.getElementById('receiptActionToolbar');
+const printReceiptBtn = document.getElementById('printReceiptBtn');
 
 const loginForm = document.getElementById('loginForm');
 const loginEmail = document.getElementById('loginEmail');
@@ -138,7 +142,7 @@ function initFormElements() {
     createCheckboxRow('otherServicesContainer', SALON_MENU.other);
 }
 
-// Computes running cash changes live on-screen as you type tender increments
+// Computes running cash changes live on-screen as you type tender increments[cite: 11]
 function calculateLiveTotals() {
     const checkedBoxes = document.querySelectorAll('.service-checkbox:checked');
     const miscPrice = parseFloat(miscInput.value) || 0.00;
@@ -156,15 +160,24 @@ function calculateLiveTotals() {
     const baseTax = baseSubtotal * HST_RATE;
     const baseTotal = baseSubtotal + baseTax;
 
+    // Use current form total baseline if active receipt window is empty
+    const currentActiveTotal = currentReceiptId ? finalBillTotalValue : baseTotal;
+
     if (isCash) {
         const tendered = parseFloat(cashTenderedInput.value) || 0;
-        const changeDue = Math.max(0, tendered - baseTotal);
+        const changeDue = Math.max(0, tendered - currentActiveTotal);
         liveChangeDueDisplay.textContent = `$${changeDue.toFixed(2)}`;
-        liveChangeDueDisplay.style.color = tendered >= baseTotal ? '#16a34a' : '#dc2626';
+        liveChangeDueDisplay.style.color = tendered >= currentActiveTotal ? '#16a34a' : '#dc2626';
+        
+        // Live feedback reflection onto active canvas receipt blocks[cite: 11]
+        if(document.getElementById('receiptBox').style.display === 'block') {
+            document.getElementById('receiptTendered').innerText = `$${tendered.toFixed(2)}`;
+            document.getElementById('receiptChange').innerText = `$${changeDue.toFixed(2)}`;
+        }
     }
 }
 
-// Payment method changes toggle view displays
+// Payment method changes toggle view displays[cite: 11]
 document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
     radio.addEventListener('change', function() {
         if (this.value === 'Cash') {
@@ -178,6 +191,36 @@ document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
 });
 miscInput.addEventListener('input', calculateLiveTotals);
 cashTenderedInput.addEventListener('input', calculateLiveTotals);
+
+// 🌟 RESET MECHANISM: Drops checking state configurations completely
+function handleFormReset() {
+    miscInput.value = '';
+    cashTenderedInput.value = '';
+    servicedBySelect.value = '';
+    loyaltyPercentInput.value = '0';
+    document.getElementById('cashCalculatorGroup').style.display = 'none';
+    document.querySelector('input[name="paymentMethod"][value="Card"]').checked = true;
+    
+    const checkboxes = document.querySelectorAll('.service-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+        document.getElementById(`wrapper_${cb.id}`).classList.remove('active');
+        document.getElementById(`qty_${cb.id}`).value = 1;
+    });
+    
+    // Clear tracking state memory variables
+    currentReceiptId = null;
+    activeReceiptCache = null;
+    finalBillTotalValue = 0;
+    
+    // Toggle containers back out of layout visibility paths
+    receiptBox.style.display = 'none';
+    loyaltyAdjustmentBox.style.display = 'none';
+    receiptActionToolbar.style.display = 'none';
+    placeholderText.style.display = 'block';
+    liveChangeDueDisplay.textContent = '$0.00';
+}
+resetFormBtn.addEventListener('click', handleFormReset);
 
 function showDashboard() {
     loginOverlay.style.display = 'none';
@@ -196,7 +239,7 @@ async function initSupabase() {
         const { data: { session } } = await supabaseClient.auth.getSession();
         if (session) { showDashboard(); } else { showLogin(); }
     } catch (err) {
-        console.error("Supabase fail error trace handled:", err);
+        console.error("Supabase initialization crash intercepted:", err);
     }
 }
 
@@ -217,7 +260,7 @@ logoutBtn.addEventListener('click', async function() {
     showLogin();
 });
 
-// PRIMARY INVOICE GENERATOR PIPELINE 
+// PRIMARY INVOICE GENERATOR PIPELINE[cite: 11]
 receiptForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
@@ -225,7 +268,7 @@ receiptForm.addEventListener('submit', async function(e) {
     const miscPrice = parseFloat(miscInput.value) || 0.00;
 
     if (checkedBoxes.length === 0 && miscPrice === 0) {
-        alert('Please pick at least one check menu target element option.');
+        alert('Please select at least one check item from the service list.');
         return;
     }
 
@@ -263,8 +306,8 @@ receiptForm.addEventListener('submit', async function(e) {
 
     const tax = subtotal * HST_RATE;
     const total = subtotal + tax;
+    finalBillTotalValue = total; // Cache absolute price value for math updates
 
-    // Cache initial snapshot profiles so loyalty math can scale accurately off clean base sums
     activeReceiptCache = {
         subtotal: subtotal,
         miscPrice: miscPrice,
@@ -290,9 +333,8 @@ receiptForm.addEventListener('submit', async function(e) {
         const { data, error } = await supabaseClient.from('receipts').insert([receiptPayload]).select();
         if (error) throw error;
 
-        currentReceiptId = data[0].id; // 🌟 Pin the unique row ID into memory cache
+        currentReceiptId = data[0].id; // Pin the unique row ID into memory cache[cite: 11]
 
-        // Paint basic raw data onto the workspace card elements
         document.getElementById('receiptDate').innerText = new Date(data[0].created_at).toLocaleString();
         
         const staffDisplay = document.getElementById('receiptStaff');
@@ -303,11 +345,11 @@ receiptForm.addEventListener('submit', async function(e) {
 
         document.getElementById('receiptItems').innerHTML = receiptItemsHTML;
         document.getElementById('receiptSubtotal').innerText = `$${subtotal.toFixed(2)}`;
-        document.getElementById('discountReceiptRow').style.display = 'none'; // Hidden until loyalty adjustment run
+        document.getElementById('discountReceiptRow').style.display = 'none'; // Hidden until loyalty adjustment run[cite: 11]
         document.getElementById('receiptTax').innerText = `$${tax.toFixed(2)}`;
         document.getElementById('receiptTotal').innerText = `$${total.toFixed(2)}`;
 
-        // Handle raw Cash adjustments
+        // Handle raw Cash adjustments[cite: 11]
         const receiptCashDetails = document.getElementById('receiptCashDetails');
         if (payMethod === 'Cash') {
             const tendered = parseFloat(cashTenderedInput.value) || 0;
@@ -319,43 +361,31 @@ receiptForm.addEventListener('submit', async function(e) {
 
         placeholderText.style.display = 'none';
         receiptBox.style.display = 'block';
-        loyaltyAdjustmentBox.style.display = 'block'; // 🌟 Show the modifier box on active tickets
+        loyaltyAdjustmentBox.style.display = 'block'; // Show the modifier box on active tickets[cite: 11]
+        receiptActionToolbar.style.display = 'flex';   // Show print controller bar
         submitBtn.textContent = 'Generate & Save Receipt';
         
-        // Reset left panel parameters cleanly
-        miscInput.value = '';
-        cashTenderedInput.value = '';
-        loyaltyPercentInput.value = '0';
-        document.getElementById('cashCalculatorGroup').style.display = 'none';
-        document.querySelector('input[name="paymentMethod"][value="Card"]').checked = true;
-        
-        checkedBoxes.forEach(cb => {
-            cb.checked = false;
-            document.getElementById(`wrapper_${cb.id}`).classList.remove('active');
-            document.getElementById(`qty_${cb.id}`).value = 1;
-        });
+        // 🌟 REMOVED FORM CLEAN RESET SNIPPET: State stays fully checked for additions!
     } catch (err) {
         alert('Storage Sync Failure Error: ' + err.message);
         submitBtn.textContent = 'Generate & Save Receipt';
     }
 });
 
-
-// 🌟 UPGRADE LOGIC MODULE: APPLY LOYALTY MODIFIER ALTERATION ROWS LIVE
+// UPGRADE LOGIC MODULE: APPLY LOYALTY MODIFIER ALTERATION ROWS LIVE[cite: 11]
 applyLoyaltyBtn.addEventListener('click', async function() {
     if (!currentReceiptId || !activeReceiptCache) return;
 
     applyLoyaltyBtn.textContent = 'Updating...';
     const discountPercent = parseFloat(loyaltyPercentInput.value) || 0;
 
-    // Run math parameters matching customized input allocations
     const baseSubtotal = activeReceiptCache.subtotal;
     const discountAmount = baseSubtotal * (discountPercent / 100);
     const updatedSubtotal = baseSubtotal - discountAmount;
     const updatedTax = updatedSubtotal * HST_RATE;
     const updatedTotal = updatedSubtotal + updatedTax;
+    finalBillTotalValue = updatedTotal; // Re-cache absolute total sum[cite: 11]
 
-    // Compile an updated payload mapping string adjustments
     const updatedPayload = {
         product_name: `${activeReceiptCache.itemsSummaryString} [Card Loyalty ${discountPercent}% Disc] [${activeReceiptCache.payMethod}]`.substring(0, 250),
         subtotal: updatedSubtotal,
@@ -364,11 +394,9 @@ applyLoyaltyBtn.addEventListener('click', async function() {
     };
 
     try {
-        // Run SQL update targeting that specific transaction primary key row
         const { error } = await supabaseClient.from('receipts').update(updatedPayload).eq('id', currentReceiptId);
         if (error) throw error;
 
-        // Repaint receipt visual nodes instantly on the screen
         document.getElementById('discountReceiptLabel').textContent = `LOYALTY DISCOUNT (${discountPercent}%):`;
         document.getElementById('receiptDiscount').textContent = `-$${discountAmount.toFixed(2)}`;
         document.getElementById('discountReceiptRow').style.display = 'flex';
@@ -376,12 +404,12 @@ applyLoyaltyBtn.addEventListener('click', async function() {
         document.getElementById('receiptTax').textContent = `$${updatedTax.toFixed(2)}`;
         document.getElementById('receiptTotal').textContent = `$${updatedTotal.toFixed(2)}`;
 
-        // Recompute the change due data strings if the user paid cash originally
         const receiptCashDetails = document.getElementById('receiptCashDetails');
         if (activeReceiptCache.payMethod === 'Cash') {
             const originalTendered = parseFloat(document.getElementById('receiptTendered').innerText.replace('$', '')) || 0;
             const updatedChange = Math.max(0, originalTendered - updatedTotal);
             document.getElementById('receiptChange').innerText = `$${updatedChange.toFixed(2)}`;
+            liveChangeDueDisplay.textContent = `$${updatedChange.toFixed(2)}`;
         }
 
         applyLoyaltyBtn.textContent = 'Apply & Update Bill';
@@ -390,6 +418,11 @@ applyLoyaltyBtn.addEventListener('click', async function() {
         alert('Database Row Alteration Failure: ' + err.message);
         applyLoyaltyBtn.textContent = 'Apply & Update Bill';
     }
+});
+
+// Trigger native OS local printing overlay configurations
+printReceiptBtn.addEventListener('click', () => {
+    window.print();
 });
 
 window.addEventListener('load', initSupabase);
