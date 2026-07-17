@@ -5,10 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Salon Portal - HST Receipt Generator</title>
     <link rel="stylesheet" href="receiptstyles.css">
+    <!-- Load the official Supabase Browser Client SDK -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 </head>
 <body>
 
+    <!-- 🔐 AUTH PORTAL WALL -->
     <div id="loginOverlay" class="login-overlay">
         <div class="login-box">
             <h2>Salon Receipts</h2>
@@ -28,6 +30,7 @@
         </div>
     </div>
 
+    <!-- 💻 SECURE SYSTEM WORKSPACE -->
     <div id="appWorkspace" class="app-workspace-hidden">
         <header>
             <div>
@@ -40,6 +43,7 @@
         </header>
 
         <div class="app-layout">
+            <!-- LEFT COLUMN: CONTROL BOARD -->
             <div class="sidebar-panel">
                 <h3>Calculate Invoice</h3>
                 <form id="receiptForm">
@@ -90,10 +94,14 @@
                         </div>
                     </div>
                     
-                    <button type="submit" id="submitBtn" class="btn-submit btn-normal">Generate & Save Receipt</button>
+                    <div class="form-action-buttons" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-top: 16px;">
+                        <button type="submit" id="submitBtn" class="btn-submit btn-normal">Generate & Save</button>
+                        <button type="button" id="resetFormBtn" class="btn-submit btn-secondary" style="background-color: #64748b; color: white;">Clear Form</button>
+                    </div>
                 </form>
             </div>
 
+            <!-- RIGHT COLUMN: LIVE CANVAS VIEWPORT -->
             <div class="receipt-container">
                 
                 <div id="loyaltyAdjustmentBox" class="loyalty-modifier-card" style="display: none;">
@@ -106,6 +114,11 @@
                         </div>
                         <button type="button" id="applyLoyaltyBtn" class="btn-submit btn-normal" style="width: auto; padding: 10px 20px;">Apply & Update Bill</button>
                     </div>
+                </div>
+
+                <!-- Print Control Wrapper Trigger -->
+                <div id="receiptActionToolbar" style="display: none; max-width: 420px; margin: 0 auto 12px auto; display: flex; justify-content: flex-end;">
+                    <button type="button" id="printReceiptBtn" class="btn-submit btn-normal" style="width: auto; padding: 8px 16px; font-size: 0.85rem; background-color: #0f172a;">🖨️ Print / Download Receipt</button>
                 </div>
 
                 <div id="receiptBox" class="receipt" style="display: none;">
