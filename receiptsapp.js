@@ -397,7 +397,7 @@ applyLoyaltyBtn.addEventListener('click', async function() {
         const { error } = await supabaseClient.from('receipts').update(updatedPayload).eq('id', currentReceiptId);
         if (error) throw error;
 
-        document.getElementById('discountReceiptLabel').textContent = `LOYALTY DISCOUNT (${discountPercent}%):`;
+        document.getElementById('discountReceiptLabel').textContent = `DISCOUNT (${discountPercent}%):`;
         document.getElementById('receiptDiscount').textContent = `-$${discountAmount.toFixed(2)}`;
         document.getElementById('discountReceiptRow').style.display = 'flex';
 
