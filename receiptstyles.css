@@ -1,4 +1,6 @@
-/* Base Canvas Setup */
+/* ==========================================================================
+   1. Base Canvas & Typography Architecture
+   ========================================================================== */
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     margin: 0;
@@ -15,7 +17,11 @@ header {
     justify-content: space-between;
     align-items: center;
 }
-header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
+header h1 { 
+    margin: 0; 
+    font-size: 1.8rem; 
+    color: #0f172a; 
+}
 
 .nav-links a {
     color: #4F46E5;
@@ -23,25 +29,50 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     font-weight: 600;
     font-size: 0.95rem;
 }
-.nav-links a:hover { text-decoration: underline; }
+.nav-links a:hover { 
+    text-decoration: underline; 
+}
 
-/* 🔐 Secure Authentication Overlay Walls */
+/* ==========================================================================
+   2. Authentication Overlay Shield
+   ========================================================================== */
 .login-overlay {
     position: fixed; 
-    top: 0; left: 0; width: 100%; height: 100%; 
+    top: 0; left: 0; 
+    width: 100%; height: 100%; 
     background-color: #faf9f6; 
-    display: flex; justify-content: center; align-items: center; 
+    display: flex; 
+    justify-content: center; 
+    align-items: center; 
     z-index: 9999;
 }
 .login-box {
-    background: white; padding: 32px; border-radius: 12px; border: 1px solid #e2e8f0; 
-    width: 340px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    background: white; 
+    padding: 32px; 
+    border-radius: 12px; 
+    border: 1px solid #e2e8f0; 
+    width: 340px; 
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
-.login-box h2 { margin: 0 0 6px 0; color: #0f172a; }
-.login-box p { margin: 0 0 20px 0; color: #64748b; font-size: 0.9rem; }
-.login-error-msg { color: #dc2626; font-size: 0.85rem; margin-top: 12px; text-align: center; display: none; font-weight: 500; }
+.login-box h2 { 
+    margin: 0 0 6px 0; 
+    color: #0f172a; 
+}
+.login-box p { 
+    margin: 0 0 20px 0; 
+    color: #64748b; 
+    font-size: 0.9rem; 
+}
+.login-error-msg { 
+    color: #dc2626; 
+    font-size: 0.85rem; 
+    margin-top: 12px; 
+    text-align: center; 
+    display: none; 
+    font-weight: 500; 
+}
 
-/* Visibility Classes controlled by JS state switches */
+/* Dynamic Workspace Visibility Classes */
 .app-workspace-hidden {
     display: none;
     opacity: 0;
@@ -51,7 +82,9 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     opacity: 1;
 }
 
-/* Structural Split System Grid Layout */
+/* ==========================================================================
+   3. Two-Column Split Grid Framework
+   ========================================================================== */
 .app-layout {
     display: grid;
     grid-template-columns: 520px 1fr;
@@ -68,21 +101,38 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     max-height: 82vh;
     overflow-y: auto;
 }
-.sidebar-panel h3 { margin: 0 0 20px 0; font-size: 1.2rem; color: #0f172a; border-bottom: 2px solid #f1f5f9; padding-bottom: 8px; }
+.sidebar-panel h3 { 
+    margin: 0 0 20px 0; 
+    font-size: 1.2rem; 
+    color: #0f172a; 
+    border-bottom: 2px solid #f1f5f9; 
+    padding-bottom: 8px; 
+}
 
-/* Categorized Section Break Labels */
+/* ==========================================================================
+   4. Categorized Service Menu & Checkbox Grid
+   ========================================================================== */
 .menu-section-title {
-    font-weight: bold; font-size: 0.85rem; color: #475569; 
-    margin: 24px 0 10px 0; text-transform: uppercase; letter-spacing: 0.5px;
-    border-left: 3px solid #4F46E5; padding-left: 8px;
+    font-weight: bold; 
+    font-size: 0.85rem; 
+    color: #475569; 
+    margin: 24px 0 10px 0; 
+    text-transform: uppercase; 
+    letter-spacing: 0.5px;
+    border-left: 3px solid #4F46E5; 
+    padding-left: 8px;
 }
 
 .checkbox-menu-grid {
-    display: flex; flex-direction: column; gap: 8px;
-    background-color: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;
+    display: flex; 
+    flex-direction: column; 
+    gap: 8px;
+    background-color: #f8fafc; 
+    padding: 14px; 
+    border-radius: 8px; 
+    border: 1px solid #e2e8f0;
 }
 
-/* Flex rows containing Checkboxes, Labels, and Multipliers */
 .menu-item-row {
     display: grid;
     grid-template-columns: 24px 1fr auto;
@@ -91,28 +141,99 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     padding: 4px 0;
     border-bottom: 1px solid #f1f5f9;
 }
-.menu-item-row:last-child { border-bottom: none; }
-.menu-item-row input[type="checkbox"] { width: 18px; height: 18px; cursor: pointer; }
-.menu-item-row label { font-size: 0.95rem; color: #334155; cursor: pointer; }
+.menu-item-row:last-child { 
+    border-bottom: none; 
+}
+.menu-item-row input[type="checkbox"] { 
+    width: 18px; 
+    height: 18px; 
+    cursor: pointer; 
+}
+.menu-item-row label { 
+    font-size: 0.95rem; 
+    color: #334155; 
+    cursor: pointer; 
+}
 
-/* Dynamic Sliding Quantity Picker Shells */
+/* Quantity Input Counter Controls */
 .qty-input-wrapper {
-    display: flex; align-items: center; gap: 6px;
-    opacity: 0; visibility: hidden; transition: opacity 0.15s ease;
+    display: flex; 
+    align-items: center; 
+    gap: 6px;
+    opacity: 0; 
+    visibility: hidden; 
+    transition: opacity 0.15s ease;
 }
 .qty-input-wrapper.active {
     opacity: 1;
     visibility: visible;
 }
-.qty-input-wrapper span { font-size: 0.8rem; color: #64748b; font-weight: 600; }
-.qty-field { width: 50px; padding: 4px 6px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.9rem; text-align: center; }
+.qty-input-wrapper span { 
+    font-size: 0.8rem; 
+    color: #64748b; 
+    font-weight: 600; 
+}
+.qty-field { 
+    width: 50px; 
+    padding: 4px 6px; 
+    border-radius: 4px; 
+    border: 1px solid #cbd5e1; 
+    font-size: 0.9rem; 
+    text-align: center; 
+}
 
-/* Shared standard form fields */
-.form-group { margin-bottom: 16px; }
-.form-group label { display: block; margin-bottom: 6px; font-weight: 500; color: #475569; font-size: 0.9rem; }
-.form-control { width: 100%; padding: 10px; border-radius: 6px; border: 1px solid #cbd5e1; box-sizing: border-box; font-size: 0.95rem; background-color: #fff; color: #334155; }
+/* Form Components & Buttons */
+.form-group { 
+    margin-bottom: 16px; 
+}
+.form-group label { 
+    display: block; 
+    margin-bottom: 6px; 
+    font-weight: 500; 
+    color: #475569; 
+    font-size: 0.9rem; 
+}
+.form-control { 
+    width: 100%; 
+    padding: 10px; 
+    border-radius: 6px; 
+    border: 1px solid #cbd5e1; 
+    box-sizing: border-box; 
+    font-size: 0.95rem; 
+    background-color: #fff; 
+    color: #334155; 
+}
 
-/* 💳 Payment Method Radio Toggle Panels */
+.btn-submit { 
+    width: 100%; 
+    padding: 12px; 
+    border-radius: 6px; 
+    border: none; 
+    font-weight: bold; 
+    font-size: 1rem; 
+    cursor: pointer; 
+    transition: opacity 0.2s; 
+}
+.btn-normal { 
+    background-color: #4F46E5; 
+    color: #ffffff; 
+}
+.btn-normal:hover { 
+    background-color: #4338ca; 
+}
+.btn-logout { 
+    background: none; 
+    border: 1px solid #dc2626; 
+    color: #dc2626; 
+    padding: 8px 16px; 
+    border-radius: 6px; 
+    cursor: pointer; 
+    font-weight: bold; 
+}
+
+/* ==========================================================================
+   5. Payment Option Toggle Controls
+   ========================================================================== */
 .payment-method-box {
     margin-top: 24px;
     background-color: #f8fafc;
@@ -125,15 +246,32 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     grid-template-columns: 1fr 1fr;
     gap: 10px;
 }
-.toggle-option { position: relative; cursor: pointer; }
-.toggle-option input[type="radio"] { position: absolute; opacity: 0; width: 0; height: 0; }
+.toggle-option { 
+    position: relative; 
+    cursor: pointer; 
+}
+.toggle-option input[type="radio"] { 
+    position: absolute; 
+    opacity: 0; 
+    width: 0; height: 0; 
+}
 .toggle-label {
-    display: block; text-align: center; padding: 10px; background-color: #ffffff;
-    border: 1px solid #cbd5e1; border-radius: 6px; font-weight: 600; font-size: 0.9rem;
-    color: #475569; transition: all 0.2s; user-select: none;
+    display: block; 
+    text-align: center; 
+    padding: 10px; 
+    background-color: #ffffff;
+    border: 1px solid #cbd5e1; 
+    border-radius: 6px; 
+    font-weight: 600; 
+    font-size: 0.9rem;
+    color: #475569; 
+    transition: all 0.2s; 
+    user-select: none;
 }
 .toggle-option input[type="radio"]:checked + .toggle-label {
-    background-color: #0f172a; color: #ffffff; border-color: #0f172a;
+    background-color: #0f172a; 
+    color: #ffffff; 
+    border-color: #0f172a;
 }
 
 /* Post-Generation Loyalty Modifier Card */
@@ -147,66 +285,123 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
     margin-left: auto;
     margin-right: auto;
 }
-.loyalty-modifier-card h4 { margin: 0 0 6px 0; color: #1e40af; font-size: 1rem; }
-.loyalty-modifier-card p { margin: 0 0 12px 0; color: #1e3a8a; font-size: 0.85rem; line-height: 1.4; }
+.loyalty-modifier-card h4 { 
+    margin: 0 0 6px 0; 
+    color: #1e40af; 
+    font-size: 1rem; 
+}
+.loyalty-modifier-card p { 
+    margin: 0 0 12px 0; 
+    color: #1e3a8a; 
+    font-size: 0.85rem; 
+    line-height: 1.4; 
+}
 
-/* Functional Form Call Buttons */
-.btn-submit { width: 100%; padding: 12px; border-radius: 6px; border: none; font-weight: bold; font-size: 1rem; cursor: pointer; transition: opacity 0.2s; }
-.btn-normal { background-color: #4F46E5; color: #ffffff; }
-.btn-normal:hover { background-color: #4338ca; }
-.btn-logout { background: none; border: 1px solid #dc2626; color: #dc2626; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+/* ==========================================================================
+   6. Receipt Ticket Display Canvas
+   ========================================================================== */
+.receipt-container { 
+    background: #ffffff; 
+    border-radius: 12px; 
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
+    border: 1px solid #e2e8f0; 
+    padding: 24px; 
+    position: sticky; 
+    top: 24px; 
+}
+.receipt { 
+    font-family: 'Courier New', Courier, monospace; 
+    border: 1px dashed #0f172a; 
+    padding: 24px; 
+    background: #fffef9; 
+    color: #000; 
+    max-width: 420px; 
+    margin: 0 auto; 
+}
+.receipt-header { 
+    text-align: center; 
+    border-bottom: 1px dashed #000; 
+    padding-bottom: 12px; 
+    margin-bottom: 16px; 
+}
+.receipt-header h3 { 
+    margin: 0 0 4px 0; 
+    letter-spacing: 1px; 
+}
+.receipt-row { 
+    display: flex; 
+    justify-content: space-between; 
+    margin: 8px 0; 
+}
+.divider { 
+    border-top: 1px dashed #000; 
+    margin: 12px 0; 
+}
+.total-row { 
+    font-weight: bold; 
+    font-size: 1.15em; 
+}
+.placeholder { 
+    color: #64748b; 
+    text-align: center; 
+    padding: 60px 0; 
+    font-style: italic; 
+}
 
-/* DASHLINE RECEIPT COMPOSITION PANELS */
-.receipt-container { background: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0; padding: 24px; position: sticky; top: 24px; }
-.receipt { font-family: 'Courier New', Courier, monospace; border: 1px dashed #0f172a; padding: 24px; background: #fffef9; color: #000; max-width: 420px; margin: 0 auto; }
-.receipt-header { text-align: center; border-bottom: 1px dashed #000; padding-bottom: 12px; margin-bottom: 16px; }
-.receipt-header h3 { margin: 0 0 4px 0; letter-spacing: 1px; }
-.receipt-row { display: flex; justify-content: space-between; margin: 8px 0; }
-.divider { border-top: 1px dashed #000; margin: 12px 0; }
-.total-row { font-weight: bold; font-size: 1.15em; }
-.placeholder { color: #64748b; text-align: center; padding: 60px 0; font-style: italic; }
-
-/* 🖨️ SINGLE-PAGE CUSTOMER RECEIPT PRINT RULES */
+/* ==========================================================================
+   7. Single-Page Print Rules (Portrait & Landscape Safe)
+   ========================================================================== */
 @media print {
+    /* Reset page boundaries */
     @page {
         margin: 0;
         size: auto;
     }
 
-    body * {
-        visibility: hidden !important;
+    /* Constrain page container height strictly to 1 page */
+    html, body {
+        height: 100% !important;
+        max-height: 100vh !important;
+        overflow: hidden !important;
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
+    /* Hide background workspace elements */
+    body * {
+        display: none !important;
+    }
+
+    /* Force display ONLY for receipt box */
     #receiptBox, #receiptBox * {
+        display: block !important;
         visibility: visible !important;
     }
 
     #receiptBox {
-        position: absolute !important;
-        left: 50% !important;
-        top: 20px !important;
-        transform: translateX(-50%) !important;
+        position: relative !important;
+        margin: 20px auto !important;
+        left: auto !important;
+        top: auto !important;
+        transform: none !important;
         width: 100% !important;
         max-width: 380px !important;
         padding: 16px !important;
-        margin: 0 !important;
         box-shadow: none !important;
         border: 1px dashed #000 !important;
         background: #ffffff !important;
+        page-break-before: avoid !important;
+        page-break-after: avoid !important;
         page-break-inside: avoid !important;
     }
 
+    /* Keep receipt row alignment intact */
     #receiptBox .receipt-row, 
     #receiptBox .receipt-header,
     #receiptBox #discountReceiptRow,
     #receiptBox #receiptCashDetails {
         display: flex !important;
         justify-content: space-between !important;
-    }
-
-    body {
-        background: #ffffff !important;
-        margin: 0 !important;
-        padding: 0 !important;
     }
 }
