@@ -166,9 +166,47 @@ header h1 { margin: 0; font-size: 1.8rem; color: #0f172a; }
 .total-row { font-weight: bold; font-size: 1.15em; }
 .placeholder { color: #64748b; text-align: center; padding: 60px 0; font-style: italic; }
 
-/* 🖨️ NATIVE PRINT RULES STACK (Safely captures canvas element targets) */
+/* 🖨️ SINGLE-PAGE CUSTOMER RECEIPT PRINT RULES */
 @media print {
-    body * { visibility: hidden; background: transparent !important; box-shadow: none !important; }
-    #receiptBox, #receiptBox * { visibility: visible; }
-    #receiptBox { position: absolute; left: 0; top: 0; width: 100%; border: none; padding: 0; }
+    @page {
+        margin: 0;
+        size: auto;
+    }
+
+    body * {
+        visibility: hidden !important;
+    }
+
+    #receiptBox, #receiptBox * {
+        visibility: visible !important;
+    }
+
+    #receiptBox {
+        position: absolute !important;
+        left: 50% !important;
+        top: 20px !important;
+        transform: translateX(-50%) !important;
+        width: 100% !important;
+        max-width: 380px !important;
+        padding: 16px !important;
+        margin: 0 !important;
+        box-shadow: none !important;
+        border: 1px dashed #000 !important;
+        background: #ffffff !important;
+        page-break-inside: avoid !important;
+    }
+
+    #receiptBox .receipt-row, 
+    #receiptBox .receipt-header,
+    #receiptBox #discountReceiptRow,
+    #receiptBox #receiptCashDetails {
+        display: flex !important;
+        justify-content: space-between !important;
+    }
+
+    body {
+        background: #ffffff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
 }
