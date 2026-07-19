@@ -352,47 +352,50 @@ header h1 {
    7. Single-Page Print Rules (Portrait & Landscape Safe)
    ========================================================================== */
 @media print {
-    /* Reset page boundaries */
     @page {
         margin: 0;
         size: auto;
     }
 
-    /* Constrain page container height strictly to 1 page */
-    html, body {
-        height: 100% !important;
-        max-height: 100vh !important;
-        overflow: hidden !important;
+    body {
         background: #ffffff !important;
         margin: 0 !important;
         padding: 0 !important;
     }
 
-    /* Hide background workspace elements */
-    body * {
+    /* Hide background workspace elements specifically */
+    #loginOverlay,
+    header,
+    .sidebar-panel,
+    .loyalty-modifier-card,
+    #receiptActionToolbar,
+    #placeholderText {
         display: none !important;
     }
 
-    /* Force display ONLY for receipt box */
-    #receiptBox, #receiptBox * {
+    .app-layout {
         display: block !important;
-        visibility: visible !important;
     }
 
+    .receipt-container {
+        border: none !important;
+        box-shadow: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Display ONLY receipt box */
     #receiptBox {
+        display: block !important;
         position: relative !important;
         margin: 20px auto !important;
-        left: auto !important;
-        top: auto !important;
-        transform: none !important;
         width: 100% !important;
         max-width: 380px !important;
         padding: 16px !important;
         box-shadow: none !important;
         border: 1px dashed #000 !important;
         background: #ffffff !important;
-        page-break-before: avoid !important;
-        page-break-after: avoid !important;
         page-break-inside: avoid !important;
     }
 
