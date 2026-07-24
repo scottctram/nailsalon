@@ -18,6 +18,7 @@ let appointments = [];
 let forceConfirmActive = false;
 let supabaseClient = null;
 let editingId = null;
+let activeStaffFilter = 'ALL'; // Active tab filter for mobile view
 
 // Document Selector Nodes
 const form = document.getElementById('bookingForm');
@@ -39,6 +40,14 @@ const notesInput = document.getElementById('notes');
 const customDurationGroup = document.getElementById('customDurationGroup');
 const customDurationInput = document.getElementById('customDuration');
 
+// Mobile Modal Nodes
+const bookingModal = document.getElementById('bookingModal');
+const modalBackdrop = document.getElementById('modalBackdrop');
+const openMobileModalBtn = document.getElementById('openMobileModalBtn');
+const closeModalBtn = document.getElementById('closeModalBtn');
+const mobileStaffTabs = document.getElementById('mobileStaffTabs');
+const formTitle = document.getElementById('formTitle');
+
 // Authentication DOM Intercept elements
 const loginForm = document.getElementById('loginForm');
 const loginEmail = document.getElementById('loginEmail');
@@ -48,13 +57,65 @@ const appWorkspace = document.getElementById('appWorkspace');
 const loginError = document.getElementById('loginError');
 const logoutBtn = document.getElementById('logoutBtn');
 
+// 📱 Mobile Modal View Controllers
+function openModal() {
+    if (window.innerWidth <= 900) {
+        bookingModal.classList.add('is-open');
+        modalBackdrop.classList.add('is-open');
+        document.body.style.overflow = 'hidden'; // Lock background scroll
+    }
+}
+
+function closeModal() {
+    bookingModal.classList.remove('is-open');
+    modalBackdrop.classList.remove('is-open');
+    document.body.style.overflow = '';
+}
+
+// Mobile Quick Staff Filter Selector Bar
+function initMobileStaffTabs() {
+    if (!mobileStaffTabs) return;
+    mobileStaffTabs.innerHTML = '';
+
+    const allChip = document.createElement('div');
+    allChip.className = `staff-tab-chip ${activeStaffFilter === 'ALL' ? 'active' : ''}`;
+    allChip.textContent = '👥 All Staff';
+    allChip.addEventListener('click', () => filterStaffView('ALL'));
+    mobileStaffTabs.appendChild(allChip);
+
+    STAFF_MEMBERS.forEach(s => {
+        const chip = document.createElement('div');
+        chip.className = `staff-tab-chip ${activeStaffFilter === s ? 'active' : ''}`;
+        chip.textContent = s;
+        chip.addEventListener('click', () => filterStaffView(s));
+        mobileStaffTabs.appendChild(chip);
+    });
+}
+
+function filterStaffView(staffName) {
+    activeStaffFilter = staffName;
+    initMobileStaffTabs();
+
+    if (staffName === 'ALL') {
+        renderCalendarGrid();
+        return;
+    }
+
+    // Scroll horizontal calendar directly to selected staff column
+    const staffIndex = STAFF_MEMBERS.indexOf(staffName);
+    if (staffIndex !== -1 && calendarScrollWindow) {
+        const colWidth = 120; // Matches minmax width in CSS grid
+        calendarScrollWindow.scrollLeft = staffIndex * colWidth;
+    }
+    renderCalendarGrid();
+}
+
 // Initialize Dynamic HTML Dropdowns & Matrix Columns
 function initFormElements() {
-    if(!dateInput.value) {
+    if (!dateInput.value) {
         dateInput.value = new Date().toISOString().split('T')[0];
     }
     
-    // Clear out setup duplicates before populating
     staffSelect.innerHTML = '';
     serviceSelect.innerHTML = '';
     timeColumn.innerHTML = '';
@@ -65,17 +126,26 @@ function initFormElements() {
     STAFF_MEMBERS.forEach(s => { 
         staffSelect.appendChild(new Option(s, s)); 
     });
+
+    initMobileStaffTabs();
 }
 
 // Re-render the calendar top header cell array with block toggles
 function updateCalendarHeaderUI() {
     calendarHeader.innerHTML = '<div class="header-cell" style="font-size: 0.85em;">Timeline</div>';
     
-    STAFF_MEMBERS.forEach(staffName => {
+    const visibleStaff = activeStaffFilter === 'ALL' 
+        ? STAFF_MEMBERS 
+        : STAFF_MEMBERS.filter(s => s === activeStaffFilter);
+
+    // Adjust grid columns dynamically if filtered
+    calendarHeader.style.gridTemplateColumns = `80px repeat(${visibleStaff.length}, minmax(120px, 1fr))`;
+    document.querySelector('.calendar-body').style.gridTemplateColumns = `80px repeat(${visibleStaff.length}, minmax(120px, 1fr))`;
+
+    visibleStaff.forEach(staffName => {
         const cell = document.createElement('div');
         cell.className = 'header-cell';
         
-        // Count regular bookings for this person today (exclude blocks)
         const activeBookings = appointments.filter(a => 
             a.date === dateInput.value && 
             a.staff === staffName && 
@@ -103,7 +173,6 @@ function updateCalendarHeaderUI() {
             blockBtn.textContent = 'Block';
         }
         
-        // Disable blocking if there are active bookings
         if (activeBookings.length > 0) {
             blockBtn.disabled = true;
             blockBtn.title = 'Cannot block: Technician already has appointments scheduled today.';
@@ -195,7 +264,6 @@ function updateFormUI() {
         durationPreview.innerHTML = `<strong>Duration Span:</strong> ${startTimeInput.value} to ${calculateEndTime(startTimeInput.value, serviceSelect.value)}`;
     }
     
-    // Check if the technician currently selected in the form is blocked off
     const isTargetStaffBlocked = appointments.some(a => 
         a.date === dateInput.value && 
         a.staff === staffSelect.value && 
@@ -227,9 +295,10 @@ function updateFormUI() {
 }
 
 function startEditing(appt) {
-    if (appt.customer === 'STAFF_BLOCKED') return; // Do not edit blocker tiles
+    if (appt.customer === 'STAFF_BLOCKED') return;
     
     editingId = appt.id;
+    if (formTitle) formTitle.textContent = 'Edit Appointment';
     dateInput.value = appt.date;
     customerInput.value = appt.customer;
     staffSelect.value = appt.staff;
@@ -240,10 +309,12 @@ function startEditing(appt) {
     deleteBtn.style.display = 'block';
     cancelEditBtn.style.display = 'block';
     updateFormUI();
+    openModal(); // Slide up modal drawer automatically on mobile
 }
 
 function resetForm() {
     editingId = null;
+    if (formTitle) formTitle.textContent = 'Log Phone Booking';
     customerInput.value = '';
     if (notesInput) notesInput.value = '';
     deleteBtn.style.display = 'none';
@@ -255,10 +326,13 @@ function resetForm() {
 function renderCalendarGrid() {
     staffTrackContainer.innerHTML = '';
     
-    // Refresh header indicators live alongside grid redraws
     updateCalendarHeaderUI();
     
-    STAFF_MEMBERS.forEach(staffName => {
+    const visibleStaff = activeStaffFilter === 'ALL' 
+        ? STAFF_MEMBERS 
+        : STAFF_MEMBERS.filter(s => s === activeStaffFilter);
+
+    visibleStaff.forEach(staffName => {
         const columnTrack = document.createElement('div');
         columnTrack.className = 'staff-column';
         
@@ -271,34 +345,27 @@ function renderCalendarGrid() {
             overlay.innerHTML = '<div class="blocked-badge">Day Off</div>';
             columnTrack.appendChild(overlay);
         } else {
-            // 🌟 NEW FUNCTIONALITY: Empty Track Click Handler to Auto-Fill Form
+            // Empty Track Click Handler to Auto-Fill & Open Popup
             columnTrack.addEventListener('click', function(e) {
-                // Ensure clicks directly on child element appointment-blocks don't trigger a new fill action
                 if (e.target !== columnTrack) return;
                 
-                // Clear any leftover edit state variables safely
                 resetForm();
                 
-                // Calculate position relative to timeline track ($60px height per hour = 1px per minute)
                 const clickY = e.offsetY;
                 const totalMinutesClicked = clickY;
                 
-                // Round downwards to the nearest standard 15-minute operational interval block
                 const roundedMinutes = Math.floor(totalMinutesClicked / 15) * 15;
-                
                 const clickHour = START_HOUR + Math.floor(roundedMinutes / 60);
                 const clickMinute = roundedMinutes % 60;
                 
                 const formattedTime = `${clickHour.toString().padStart(2, '0')}:${clickMinute.toString().padStart(2, '0')}`;
                 
-                // Autofill left workspace controllers instantly
                 staffSelect.value = staffName;
                 startTimeInput.value = formattedTime;
                 
-                // Auto-focus name field to prompt immediate customer input action
-                customerInput.focus();
-                
                 updateFormUI();
+                openModal(); // Open popup drawer cleanly
+                setTimeout(() => customerInput.focus(), 300);
             });
 
             staffDayEvents.forEach(appt => {
@@ -322,7 +389,7 @@ function renderCalendarGrid() {
                 `;
                 
                 block.addEventListener('click', (e) => {
-                    e.stopPropagation(); // Stops the container timeline click handler from firing
+                    e.stopPropagation();
                     startEditing(appt);
                 });
                 columnTrack.appendChild(block);
@@ -332,7 +399,7 @@ function renderCalendarGrid() {
     });
 }
 
-// Fetch calendar data from database (Only works if session is authorized)
+// Fetch calendar data from database
 async function fetchData() {
     const { data, error } = await supabaseClient.from('appointments').select('*');
     if (!error) {
@@ -342,7 +409,6 @@ async function fetchData() {
     }
 }
 
-// Show schedule dashboard interface layer
 function showDashboard() {
     loginOverlay.style.display = 'none';
     appWorkspace.style.opacity = '1';
@@ -351,18 +417,14 @@ function showDashboard() {
     fetchData();
 }
 
-// Show login layer interface template block
 function showLogin() {
     loginOverlay.style.display = 'flex';
     appWorkspace.style.opacity = '0';
     appWorkspace.style.pointerEvents = 'none';
 }
 
-// Connect application to backend database layer
 async function initSupabase() {
     supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-    
-    // Check if user is already remembered locally from a past session
     const { data: { session } } = await supabaseClient.auth.getSession();
     if (session) {
         showDashboard();
@@ -371,7 +433,17 @@ async function initSupabase() {
     }
 }
 
-// LOGIN SUBMISSION HANDLER
+// Event Listeners for Mobile Popup Modal
+if (openMobileModalBtn) {
+    openMobileModalBtn.addEventListener('click', () => {
+        resetForm();
+        openModal();
+    });
+}
+
+if (closeModalBtn) closeModalBtn.addEventListener('click', closeModal);
+if (modalBackdrop) modalBackdrop.addEventListener('click', closeModal);
+
 loginForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     loginBtn.textContent = 'Verifying...';
@@ -392,7 +464,6 @@ loginForm.addEventListener('submit', async function(e) {
     }
 });
 
-// LOGOUT HANDLER LINK
 logoutBtn.addEventListener('click', async function() {
     await supabaseClient.auth.signOut();
     appointments = [];
@@ -401,7 +472,7 @@ logoutBtn.addEventListener('click', async function() {
     showLogin();
 });
 
-// Form Submit Pipeline (Handles both New Bookings and Updates)
+// Form Submit Pipeline
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
     if (checkConflict() && !forceConfirmActive) {
@@ -429,6 +500,7 @@ form.addEventListener('submit', async function(e) {
             appointments[idx] = data[0];
             resetForm();
             renderCalendarGrid();
+            closeModal(); // Close modal drawer on submit
         }
     } else {
         const { data, error } = await supabaseClient.from('appointments').insert([payload]).select();
@@ -436,11 +508,11 @@ form.addEventListener('submit', async function(e) {
             appointments.push(data[0]);
             resetForm();
             renderCalendarGrid();
+            closeModal(); // Close modal drawer on submit
         }
     }
 });
 
-// Delete Execution Link Interceptions
 deleteBtn.addEventListener('click', async function() {
     if (!editingId) return;
     if (confirm(`Delete appointment for ${customerInput.value}?`)) {
@@ -449,11 +521,15 @@ deleteBtn.addEventListener('click', async function() {
             appointments = appointments.filter(a => a.id !== editingId);
             resetForm();
             renderCalendarGrid();
+            closeModal();
         }
     }
 });
 
-cancelEditBtn.addEventListener('click', resetForm);
+cancelEditBtn.addEventListener('click', () => {
+    resetForm();
+    closeModal();
+});
 
 [dateInput, staffSelect, serviceSelect, startTimeInput, customDurationInput].forEach(el => el.addEventListener('change', () => { 
     forceConfirmActive = false; 
