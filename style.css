@@ -26,13 +26,14 @@ header p {
 }
 
 /* ==========================================================================
-   2. Two-Column Dashboard Layout
+   2. Two-Column Dashboard Layout & Panel Controls
    ========================================================================== */
 .app-layout {
     display: grid;
     grid-template-columns: 360px 1fr;
     gap: 24px;
     align-items: start;
+    position: relative;
 }
 
 /* Left Column Control Panel */
@@ -44,14 +45,40 @@ header p {
     padding: 24px;
     position: sticky;
     top: 24px;
+    z-index: 100;
 }
-.sidebar-panel h3 {
-    margin-top: 0; 
-    margin-bottom: 20px; 
-    font-size: 1.2rem;
-    color: #0f172a; 
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
     border-bottom: 2px solid #f1f5f9; 
     padding-bottom: 8px;
+    margin-bottom: 20px; 
+}
+.sidebar-panel h3 {
+    margin: 0;
+    font-size: 1.2rem;
+    color: #0f172a; 
+}
+.close-modal-btn {
+    display: none;
+    background: none;
+    border: none;
+    font-size: 1.8rem;
+    color: #64748b;
+    cursor: pointer;
+    line-height: 1;
+    padding: 0 8px;
+}
+.close-modal-btn:hover {
+    color: #0f172a;
+}
+
+.mobile-action-bar {
+    display: none;
+    margin-bottom: 16px;
+    flex-direction: column;
+    gap: 12px;
 }
 
 /* ==========================================================================
@@ -139,7 +166,7 @@ textarea.form-control {
 }
 
 /* ==========================================================================
-   5. Responsive Interactive Calendar Matrix (Updated for 8 Staff Channels)
+   5. Responsive Interactive Calendar Matrix
    ========================================================================== */
 .calendar-container { 
     background: #ffffff; 
@@ -147,6 +174,7 @@ textarea.form-control {
     box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05); 
     border: 1px solid #e2e8f0; 
     overflow-x: auto; 
+    position: relative;
 }
 
 .calendar-header { 
@@ -155,6 +183,9 @@ textarea.form-control {
     border-bottom: 2px solid #e2e8f0; 
     background-color: #f8fafc; 
     text-align: center; 
+    position: sticky;
+    top: 0;
+    z-index: 15;
 }
 .header-cell { 
     padding: 10px 4px; 
@@ -191,12 +222,15 @@ textarea.form-control {
     background-size: 100% 60px; 
 }
 
-/* Timeline Label Configurations */
+/* Timeline Label Configurations (Sticky on horizontal scroll) */
 .time-column { 
     display: flex; 
     flex-direction: column; 
     border-right: 1px solid #e2e8f0; 
     background-color: #f8fafc; 
+    position: sticky;
+    left: 0;
+    z-index: 10;
 }
 .time-slot { 
     height: 60px; 
@@ -215,7 +249,7 @@ textarea.form-control {
     position: relative; 
     height: 100%; 
     border-right: 1px solid #e2e8f0; 
-    cursor: cell; /* 🌟 Visual cue signifying empty tracks are interactive */
+    cursor: cell; 
 }
 .staff-column:last-child { 
     border-right: none; 
@@ -239,6 +273,7 @@ textarea.form-control {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); 
     line-height: 1.3;
     transition: transform 0.1s, box-shadow 0.1s;
+    z-index: 2;
 }
 .appointment-block:hover {
     transform: translateY(-1px);
@@ -305,7 +340,7 @@ textarea.form-control {
     justify-content: center;
     align-items: center;
     z-index: 5;
-    cursor: not-allowed; /* Overrides column cursor when day off is active */
+    cursor: not-allowed; 
 }
 .blocked-badge {
     background-color: #0f172a;
@@ -317,4 +352,113 @@ textarea.form-control {
     letter-spacing: 1px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     transform: rotate(-5deg);
+}
+
+/* Modal Backdrop */
+.modal-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: rgba(15, 23, 42, 0.5);
+    z-index: 990;
+    backdrop-filter: blur(2px);
+}
+
+/* ==========================================================================
+   8. Mobile Optimization & Slide-up Popup Rules
+   ========================================================================== */
+@media (max-width: 900px) {
+    body {
+        padding: 12px;
+    }
+
+    header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 12px;
+    }
+
+    .app-layout {
+        grid-template-columns: 1fr;
+    }
+
+    /* Show Mobile Navigation & Floating Action Controls */
+    .mobile-action-bar {
+        display: flex;
+    }
+
+    .floating-book-btn {
+        box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);
+        font-size: 1.05rem;
+        padding: 14px;
+    }
+
+    .mobile-staff-tabs {
+        display: flex;
+        gap: 6px;
+        overflow-x: auto;
+        padding-bottom: 6px;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .staff-tab-chip {
+        padding: 6px 12px;
+        border-radius: 20px;
+        background-color: #ffffff;
+        border: 1px solid #cbd5e1;
+        color: #475569;
+        font-size: 0.82rem;
+        font-weight: 600;
+        white-space: nowrap;
+        cursor: pointer;
+        transition: all 0.15s ease;
+    }
+
+    .staff-tab-chip.active {
+        background-color: #4F46E5;
+        color: #ffffff;
+        border-color: #4F46E5;
+    }
+
+    /* Transform Booking Form into a Popup Modal Drawer */
+    .sidebar-panel {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        top: auto;
+        max-height: 85vh;
+        border-radius: 20px 20px 0 0;
+        z-index: 1000;
+        overflow-y: auto;
+        box-shadow: 0 -4px 24px rgba(0, 0, 0, 0.15);
+        transform: translateY(100%);
+        transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+        display: block;
+    }
+
+    .sidebar-panel.is-open {
+        transform: translateY(0);
+    }
+
+    .close-modal-btn {
+        display: block;
+    }
+
+    .modal-backdrop.is-open {
+        display: block;
+    }
+
+    /* Calendar Grid Touch Optimizations */
+    .calendar-container {
+        border-radius: 8px;
+    }
+
+    /* Fix timeline header sticky positioning inside scroll view */
+    .calendar-header .header-cell:first-child {
+        position: sticky;
+        left: 0;
+        background-color: #f8fafc;
+        z-index: 20;
+    }
 }
