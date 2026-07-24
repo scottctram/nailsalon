@@ -11,6 +11,7 @@
 </head>
 <body>
 
+    <!-- 🔐 AUTH PORTAL WALL -->
     <div id="loginOverlay" style="position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: #faf9f6; display: flex; justify-content: center; align-items: center; z-index: 9999;">
         <div style="background: white; padding: 32px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; width: 340px;">
             <h2 style="margin-top: 0; margin-bottom: 6px; color: #0f172a;">Lindaly Nail Salon Portal</h2>
@@ -31,6 +32,7 @@
         </div>
     </div>
 
+    <!-- 💻 SECURE SYSTEM WORKSPACE -->
     <div id="appWorkspace" style="opacity: 0; pointer-events: none; transition: opacity 0.3s ease;">
         <header style="display: flex; justify-content: space-between; align-items: center;">
             <div>
@@ -40,9 +42,24 @@
             <button id="logoutBtn" style="background: none; border: 1px solid #dc2626; color: #dc2626; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold;">Sign Out</button>
         </header>
 
+        <!-- 📱 MOBILE FLOATING ACTION BUTTON & QUICK FILTER BAR -->
+        <div class="mobile-action-bar">
+            <button type="button" id="openMobileModalBtn" class="btn-submit btn-normal floating-book-btn">
+                ➕ New Booking
+            </button>
+            <div id="mobileStaffTabs" class="mobile-staff-tabs"></div>
+        </div>
+
         <div class="app-layout">
-            <div class="sidebar-panel">
-                <h3>Log Phone Booking</h3>
+            <!-- BACKDROP OVERLAY FOR MOBILE POPUP -->
+            <div id="modalBackdrop" class="modal-backdrop"></div>
+
+            <!-- SIDEBAR / POPUP MODAL FORM -->
+            <div id="bookingModal" class="sidebar-panel">
+                <div class="panel-header">
+                    <h3 id="formTitle">Log Phone Booking</h3>
+                    <button type="button" id="closeModalBtn" class="close-modal-btn">&times;</button>
+                </div>
                 <form id="bookingForm">
                     <div class="form-group">
                         <label for="appointmentDate">Appointment Date</label>
@@ -86,6 +103,7 @@
                 </form>
             </div>
 
+            <!-- CALENDAR GRID CONTAINER -->
             <div class="calendar-container">
                 <div id="calendarHeader" class="calendar-header">
                     <div class="header-cell" style="font-size: 0.85em;">Timeline</div>
