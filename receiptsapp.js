@@ -27,7 +27,7 @@ const SALON_MENU = {
     waxing: {
         "Waxing: Eyebrows": 8.00,
         "Waxing: Forehead": 6.00,
-        "Waxing: Upper lips": 5.00,
+        "Waxing: Upper lips": 6.00,
         "Waxing: Chin": 6.00,
         "Waxing: Full face": 25.00,
         "Waxing: Under arms": 10.00,
@@ -42,7 +42,7 @@ const SALON_MENU = {
         "Waxing: Full body": 130.00,
         "Threading: Eyebrows": 8.00,
         "Threading: Forehead": 6.00,
-        "Threading: Upper lips": 5.00,
+        "Threading: Upper lips": 6.00,
         "Threading: Chin": 6.00,
         "Threading: Full face": 30.00
     },
