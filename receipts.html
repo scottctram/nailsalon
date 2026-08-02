@@ -53,21 +53,8 @@
                         <select id="servicedBy" class="form-control"></select>
                     </div>
 
-                    <div class="menu-section-title">Nails & Hands Care</div>
-                    <div id="nailServicesContainer" class="checkbox-menu-grid"></div>
-
-                    <div class="menu-section-title">Waxing & Threading</div>
-                    <div id="waxingServicesContainer" class="checkbox-menu-grid"></div>
-
-                    <div class="menu-section-title">Lashes, Facials & Extra Add-ons</div>
-                    <div id="otherServicesContainer" class="checkbox-menu-grid"></div>
-
-                    <div class="form-group" style="margin-top: 24px;">
-                        <label for="miscInput">Miscellaneous Flat Amount ($)</label>
-                        <input type="number" id="miscInput" class="form-control" min="0" step="0.01" placeholder="0.00">
-                    </div>
-
-                    <div class="payment-method-box">
+                    <!-- 💳 PAYMENT CONTROLS & ACTION BUTTONS MOVED TO TOP -->
+                    <div class="payment-method-box" style="margin-top: 12px; margin-bottom: 20px;">
                         <label style="font-weight: bold; margin-bottom: 8px; display: block; color: #0f172a;">Payment Method</label>
                         <div class="toggle-group">
                             <label class="toggle-option">
@@ -92,12 +79,37 @@
                                 </div>
                             </div>
                         </div>
+
+                        <div class="form-action-buttons" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-top: 16px;">
+                            <button type="submit" id="submitBtn" class="btn-submit btn-normal">Generate & Save</button>
+                            <button type="button" id="resetFormBtn" class="btn-submit btn-secondary" style="background-color: #64748b; color: white;">Clear Form</button>
+                        </div>
                     </div>
-                    
-                    <div class="form-action-buttons" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 12px; margin-top: 16px;">
-                        <button type="submit" id="submitBtn" class="btn-submit btn-normal">Generate & Save</button>
-                        <button type="button" id="resetFormBtn" class="btn-submit btn-secondary" style="background-color: #64748b; color: white;">Clear Form</button>
+
+                    <div class="menu-section-title">Nails & Hands Care</div>
+                    <div id="nailServicesContainer" class="checkbox-menu-grid"></div>
+
+                    <div class="menu-section-title">Waxing & Threading</div>
+                    <div id="waxingServicesContainer" class="checkbox-menu-grid"></div>
+
+                    <div class="menu-section-title">Lashes, Facials & Extra Add-ons</div>
+                    <div id="otherServicesContainer" class="checkbox-menu-grid"></div>
+
+                    <!-- CUSTOM MISC ITEM (NAME + PRICE) -->
+                    <div class="form-group" style="margin-top: 24px; background-color: #f8fafc; padding: 14px; border-radius: 8px; border: 1px solid #e2e8f0;">
+                        <label style="font-weight: bold; color: #0f172a; margin-bottom: 8px;">Custom Miscellaneous Item</label>
+                        <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 10px;">
+                            <div>
+                                <label for="miscNameInput" style="font-size: 0.8rem; color: #64748b;">Item Description</label>
+                                <input type="text" id="miscNameInput" class="form-control" placeholder="e.g. Special Polish, Gift Card">
+                            </div>
+                            <div>
+                                <label for="miscInput" style="font-size: 0.8rem; color: #64748b;">Amount ($)</label>
+                                <input type="number" id="miscInput" class="form-control" min="0" step="0.01" placeholder="0.00">
+                            </div>
+                        </div>
                     </div>
+
                 </form>
             </div>
 
