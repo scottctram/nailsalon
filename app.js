@@ -9,7 +9,7 @@ const SERVICES = {
     'Nail Art Removal': 15,
     'Other (Custom)': 0 
 };
-const STAFF_MEMBERS = ['Anna', 'Kim', 'Rose', 'Maira', 'Yuzu', 'Komal', 'Ruby', 'Linda'];
+const STAFF_MEMBERS = ['Anna', 'Kim', 'Rose', 'Maira', 'Yuzu', 'Komal', 'Ruby', 'Linda', 'Hafsa', 'Love'];
 const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00', '19:00', '20:00', '21:00'];
 const START_HOUR = 9;
 
@@ -18,7 +18,7 @@ let appointments = [];
 let forceConfirmActive = false;
 let supabaseClient = null;
 let editingId = null;
-let activeStaffFilter = 'ALL'; // Active tab filter for mobile view
+let activeStaffFilter = 'ALL'; 
 
 // Document Selector Nodes
 const form = document.getElementById('bookingForm');
@@ -57,12 +57,11 @@ const appWorkspace = document.getElementById('appWorkspace');
 const loginError = document.getElementById('loginError');
 const logoutBtn = document.getElementById('logoutBtn');
 
-// 📱 Mobile Modal View Controllers
 function openModal() {
     if (window.innerWidth <= 900) {
         bookingModal.classList.add('is-open');
         modalBackdrop.classList.add('is-open');
-        document.body.style.overflow = 'hidden'; // Lock background scroll
+        document.body.style.overflow = 'hidden';
     }
 }
 
@@ -72,7 +71,6 @@ function closeModal() {
     document.body.style.overflow = '';
 }
 
-// Mobile Quick Staff Filter Selector Bar
 function initMobileStaffTabs() {
     if (!mobileStaffTabs) return;
     mobileStaffTabs.innerHTML = '';
@@ -101,16 +99,14 @@ function filterStaffView(staffName) {
         return;
     }
 
-    // Scroll horizontal calendar directly to selected staff column
     const staffIndex = STAFF_MEMBERS.indexOf(staffName);
     if (staffIndex !== -1 && calendarScrollWindow) {
-        const colWidth = 120; // Matches minmax width in CSS grid
+        const colWidth = 120; 
         calendarScrollWindow.scrollLeft = staffIndex * colWidth;
     }
     renderCalendarGrid();
 }
 
-// Initialize Dynamic HTML Dropdowns & Matrix Columns
 function initFormElements() {
     if (!dateInput.value) {
         dateInput.value = new Date().toISOString().split('T')[0];
@@ -130,7 +126,6 @@ function initFormElements() {
     initMobileStaffTabs();
 }
 
-// Re-render the calendar top header cell array with block toggles
 function updateCalendarHeaderUI() {
     calendarHeader.innerHTML = '<div class="header-cell" style="font-size: 0.85em;">Timeline</div>';
     
@@ -138,7 +133,6 @@ function updateCalendarHeaderUI() {
         ? STAFF_MEMBERS 
         : STAFF_MEMBERS.filter(s => s === activeStaffFilter);
 
-    // Adjust grid columns dynamically if filtered
     calendarHeader.style.gridTemplateColumns = `80px repeat(${visibleStaff.length}, minmax(120px, 1fr))`;
     document.querySelector('.calendar-body').style.gridTemplateColumns = `80px repeat(${visibleStaff.length}, minmax(120px, 1fr))`;
 
@@ -190,7 +184,6 @@ function updateCalendarHeaderUI() {
     });
 }
 
-// Action utility pipeline to write or remove blocker transactions from Supabase
 async function toggleStaffBlock(staffName, wasBlocked) {
     const activeDate = dateInput.value;
     
@@ -223,7 +216,6 @@ async function toggleStaffBlock(staffName, wasBlocked) {
     }
 }
 
-// Calculate Accurate Service End Boundary Windows
 function calculateEndTime(start, serviceName) {
     const duration = serviceName === 'Other (Custom)' 
         ? (parseInt(customDurationInput.value) || 0) 
@@ -234,7 +226,6 @@ function calculateEndTime(start, serviceName) {
     return `${Math.floor(total / 60).toString().padStart(2, '0')}:${(total % 60).toString().padStart(2, '0')}`;
 }
 
-// Conflict Segment Interception Algorithm
 function checkConflict() {
     const currentDate = dateInput.value;
     const currentStaff = staffSelect.value;
@@ -258,7 +249,6 @@ function checkConflict() {
     });
 }
 
-// State-Driven Form UI Management
 function updateFormUI() {
     if (startTimeInput.value) {
         durationPreview.innerHTML = `<strong>Duration Span:</strong> ${startTimeInput.value} to ${calculateEndTime(startTimeInput.value, serviceSelect.value)}`;
@@ -309,7 +299,7 @@ function startEditing(appt) {
     deleteBtn.style.display = 'block';
     cancelEditBtn.style.display = 'block';
     updateFormUI();
-    openModal(); // Slide up modal drawer automatically on mobile
+    openModal(); 
 }
 
 function resetForm() {
@@ -345,7 +335,6 @@ function renderCalendarGrid() {
             overlay.innerHTML = '<div class="blocked-badge">Day Off</div>';
             columnTrack.appendChild(overlay);
         } else {
-            // Empty Track Click Handler to Auto-Fill & Open Popup
             columnTrack.addEventListener('click', function(e) {
                 if (e.target !== columnTrack) return;
                 
@@ -364,7 +353,7 @@ function renderCalendarGrid() {
                 startTimeInput.value = formattedTime;
                 
                 updateFormUI();
-                openModal(); // Open popup drawer cleanly
+                openModal(); 
                 setTimeout(() => customerInput.focus(), 300);
             });
 
@@ -399,7 +388,6 @@ function renderCalendarGrid() {
     });
 }
 
-// Fetch calendar data from database
 async function fetchData() {
     const { data, error } = await supabaseClient.from('appointments').select('*');
     if (!error) {
@@ -433,7 +421,6 @@ async function initSupabase() {
     }
 }
 
-// Event Listeners for Mobile Popup Modal
 if (openMobileModalBtn) {
     openMobileModalBtn.addEventListener('click', () => {
         resetForm();
@@ -472,7 +459,6 @@ logoutBtn.addEventListener('click', async function() {
     showLogin();
 });
 
-// Form Submit Pipeline
 form.addEventListener('submit', async function(e) {
     e.preventDefault();
     if (checkConflict() && !forceConfirmActive) {
@@ -500,7 +486,7 @@ form.addEventListener('submit', async function(e) {
             appointments[idx] = data[0];
             resetForm();
             renderCalendarGrid();
-            closeModal(); // Close modal drawer on submit
+            closeModal();
         }
     } else {
         const { data, error } = await supabaseClient.from('appointments').insert([payload]).select();
@@ -508,7 +494,7 @@ form.addEventListener('submit', async function(e) {
             appointments.push(data[0]);
             resetForm();
             renderCalendarGrid();
-            closeModal(); // Close modal drawer on submit
+            closeModal();
         }
     }
 });
