@@ -2,9 +2,9 @@ const SUPABASE_URL = 'https://rdfxkunntwffxibaoqnk.supabase.co';
 const SUPABASE_ANON_KEY = 'sb_publishable_lYXIa2nPYnpn6CGpPHNVEw_yDOp0P13';
 
 const HST_RATE = 0.13;
-const STAFF_MEMBERS = ['Anna', 'Kim', 'Rose', 'Maira', 'Yuzu', 'Komal', 'Ruby', 'Linda'];
+const STAFF_MEMBERS = ['Anna', 'Kim', 'Rose', 'Maira', 'Yuzu', 'Komal', 'Ruby', 'Linda', 'Hafsa', 'Love'];
 
-// CATEGORIZED PRICING CATALOG DICTIONARY[cite: 11]
+// CATEGORIZED PRICING CATALOG DICTIONARY
 const SALON_MENU = {
     nails: {
         "Full Set (No Colour)": 35.00,
@@ -21,11 +21,12 @@ const SALON_MENU = {
         "Spa Pedicure & Manicure (Colour)": 70.00,
         "Colour Change (Fingers)": 20.00,
         "Colour Change (Toes)": 20.00,
-        "Finger Nails Trim": 10.00,
+        "Finger Nails Trim": 7.00,
         "Toe Nails Trim": 10.00
     },
     waxing: {
         "Waxing: Eyebrows": 8.00,
+        "Waxing: Forehead": 6.00,
         "Waxing: Upper lips": 5.00,
         "Waxing: Chin": 6.00,
         "Waxing: Full face": 25.00,
@@ -40,6 +41,7 @@ const SALON_MENU = {
         "Waxing: Brazilian": 40.00,
         "Waxing: Full body": 130.00,
         "Threading: Eyebrows": 8.00,
+        "Threading: Forehead": 6.00,
         "Threading: Upper lips": 5.00,
         "Threading: Chin": 6.00,
         "Threading: Full face": 30.00
@@ -52,7 +54,8 @@ const SALON_MENU = {
         "Extra Length Add-on": 5.00,
         "Take Off Shellac Add-on": 5.00,
         "Shellac Removal Service": 7.00,
-        "Artificial Nail Removal": 17.00,
+        "Shellac Removal & Nails Trim": 14.00,
+        "Artificial Nail Removal": 20.00,
         "Eyelash: Single (One by One)": 75.00,
         "Eyelash: Refill Single Lashes": 50.00,
         "Eyelash: Strip Lashes": 15.00,
@@ -64,20 +67,21 @@ const SALON_MENU = {
 };
 
 let supabaseClient = null;
-let currentReceiptId = null; // Memory anchor to track active receipt row to update[cite: 11]
-let activeReceiptCache = null; // Cache snapshot values of baseline run items[cite: 11]
-let finalBillTotalValue = 0; // Tracks running total balance for cash-change arithmetic routines
+let currentReceiptId = null; 
+let activeReceiptCache = null; 
+let finalBillTotalValue = 0; 
 
-// Document Nodes[cite: 11]
+// Document Nodes
 const receiptForm = document.getElementById('receiptForm');
 const servicedBySelect = document.getElementById('servicedBy');
+const miscNameInput = document.getElementById('miscNameInput');
 const miscInput = document.getElementById('miscInput');
 const submitBtn = document.getElementById('submitBtn');
 const resetFormBtn = document.getElementById('resetFormBtn');
 const receiptBox = document.getElementById('receiptBox');
 const placeholderText = document.getElementById('placeholderText');
 
-// Payment & Loyalty Nodes[cite: 11]
+// Payment & Loyalty Nodes
 const cashCalculatorGroup = document.getElementById('cashCalculatorGroup');
 const cashTenderedInput = document.getElementById('cashTendered');
 const liveChangeDueDisplay = document.getElementById('liveChangeDue');
@@ -142,7 +146,6 @@ function initFormElements() {
     createCheckboxRow('otherServicesContainer', SALON_MENU.other);
 }
 
-// Computes running cash changes live on-screen as you type tender increments[cite: 11]
 function calculateLiveTotals() {
     const checkedBoxes = document.querySelectorAll('.service-checkbox:checked');
     const miscPrice = parseFloat(miscInput.value) || 0.00;
@@ -160,7 +163,6 @@ function calculateLiveTotals() {
     const baseTax = baseSubtotal * HST_RATE;
     const baseTotal = baseSubtotal + baseTax;
 
-    // Use current form total baseline if active receipt window is empty
     const currentActiveTotal = currentReceiptId ? finalBillTotalValue : baseTotal;
 
     if (isCash) {
@@ -169,7 +171,6 @@ function calculateLiveTotals() {
         liveChangeDueDisplay.textContent = `$${changeDue.toFixed(2)}`;
         liveChangeDueDisplay.style.color = tendered >= currentActiveTotal ? '#16a34a' : '#dc2626';
         
-        // Live feedback reflection onto active canvas receipt blocks[cite: 11]
         if(document.getElementById('receiptBox').style.display === 'block') {
             document.getElementById('receiptTendered').innerText = `$${tendered.toFixed(2)}`;
             document.getElementById('receiptChange').innerText = `$${changeDue.toFixed(2)}`;
@@ -177,7 +178,6 @@ function calculateLiveTotals() {
     }
 }
 
-// Payment method changes toggle view displays[cite: 11]
 document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
     radio.addEventListener('change', function() {
         if (this.value === 'Cash') {
@@ -190,10 +190,11 @@ document.querySelectorAll('input[name="paymentMethod"]').forEach(radio => {
     });
 });
 miscInput.addEventListener('input', calculateLiveTotals);
+if (miscNameInput) miscNameInput.addEventListener('input', calculateLiveTotals);
 cashTenderedInput.addEventListener('input', calculateLiveTotals);
 
-// 🌟 RESET MECHANISM: Drops checking state configurations completely
 function handleFormReset() {
+    if (miscNameInput) miscNameInput.value = '';
     miscInput.value = '';
     cashTenderedInput.value = '';
     servicedBySelect.value = '';
@@ -208,12 +209,10 @@ function handleFormReset() {
         document.getElementById(`qty_${cb.id}`).value = 1;
     });
     
-    // Clear tracking state memory variables
     currentReceiptId = null;
     activeReceiptCache = null;
     finalBillTotalValue = 0;
     
-    // Toggle containers back out of layout visibility paths
     receiptBox.style.display = 'none';
     loyaltyAdjustmentBox.style.display = 'none';
     receiptActionToolbar.style.display = 'none';
@@ -260,15 +259,18 @@ logoutBtn.addEventListener('click', async function() {
     showLogin();
 });
 
-// PRIMARY INVOICE GENERATOR PIPELINE[cite: 11]
+// PRIMARY INVOICE GENERATOR PIPELINE
 receiptForm.addEventListener('submit', async function(e) {
     e.preventDefault();
     
     const checkedBoxes = document.querySelectorAll('.service-checkbox:checked');
     const miscPrice = parseFloat(miscInput.value) || 0.00;
+    const customMiscName = miscNameInput && miscNameInput.value.trim() !== '' 
+        ? miscNameInput.value.trim() 
+        : "Misc Amount";
 
     if (checkedBoxes.length === 0 && miscPrice === 0) {
-        alert('Please select at least one check item from the service list.');
+        alert('Please select at least one check item from the service list or enter a custom amount.');
         return;
     }
 
@@ -300,13 +302,13 @@ receiptForm.addEventListener('submit', async function(e) {
 
     if (miscPrice > 0) {
         subtotal += miscPrice;
-        receiptItemsHTML += `<div class="receipt-row"><span>Misc Amount</span><span>$${miscPrice.toFixed(2)}</span></div>`;
-        selectedItemsList.push(`Misc: $${miscPrice.toFixed(2)}`);
+        receiptItemsHTML += `<div class="receipt-row"><span>${customMiscName}</span><span>$${miscPrice.toFixed(2)}</span></div>`;
+        selectedItemsList.push(`${customMiscName}: $${miscPrice.toFixed(2)}`);
     }
 
     const tax = subtotal * HST_RATE;
     const total = subtotal + tax;
-    finalBillTotalValue = total; // Cache absolute price value for math updates
+    finalBillTotalValue = total;
 
     activeReceiptCache = {
         subtotal: subtotal,
@@ -333,7 +335,7 @@ receiptForm.addEventListener('submit', async function(e) {
         const { data, error } = await supabaseClient.from('receipts').insert([receiptPayload]).select();
         if (error) throw error;
 
-        currentReceiptId = data[0].id; // Pin the unique row ID into memory cache[cite: 11]
+        currentReceiptId = data[0].id;
 
         document.getElementById('receiptDate').innerText = new Date(data[0].created_at).toLocaleString();
         
@@ -345,11 +347,10 @@ receiptForm.addEventListener('submit', async function(e) {
 
         document.getElementById('receiptItems').innerHTML = receiptItemsHTML;
         document.getElementById('receiptSubtotal').innerText = `$${subtotal.toFixed(2)}`;
-        document.getElementById('discountReceiptRow').style.display = 'none'; // Hidden until loyalty adjustment run[cite: 11]
+        document.getElementById('discountReceiptRow').style.display = 'none'; 
         document.getElementById('receiptTax').innerText = `$${tax.toFixed(2)}`;
         document.getElementById('receiptTotal').innerText = `$${total.toFixed(2)}`;
 
-        // Handle raw Cash adjustments[cite: 11]
         const receiptCashDetails = document.getElementById('receiptCashDetails');
         if (payMethod === 'Cash') {
             const tendered = parseFloat(cashTenderedInput.value) || 0;
@@ -361,18 +362,15 @@ receiptForm.addEventListener('submit', async function(e) {
 
         placeholderText.style.display = 'none';
         receiptBox.style.display = 'block';
-        loyaltyAdjustmentBox.style.display = 'block'; // Show the modifier box on active tickets[cite: 11]
-        receiptActionToolbar.style.display = 'flex';   // Show print controller bar
-        submitBtn.textContent = 'Generate & Save Receipt';
-        
-        // 🌟 REMOVED FORM CLEAN RESET SNIPPET: State stays fully checked for additions!
+        loyaltyAdjustmentBox.style.display = 'block'; 
+        receiptActionToolbar.style.display = 'flex';   
+        submitBtn.textContent = 'Generate & Save';
     } catch (err) {
         alert('Storage Sync Failure Error: ' + err.message);
-        submitBtn.textContent = 'Generate & Save Receipt';
+        submitBtn.textContent = 'Generate & Save';
     }
 });
 
-// UPGRADE LOGIC MODULE: APPLY LOYALTY MODIFIER ALTERATION ROWS LIVE[cite: 11]
 applyLoyaltyBtn.addEventListener('click', async function() {
     if (!currentReceiptId || !activeReceiptCache) return;
 
@@ -384,7 +382,7 @@ applyLoyaltyBtn.addEventListener('click', async function() {
     const updatedSubtotal = baseSubtotal - discountAmount;
     const updatedTax = updatedSubtotal * HST_RATE;
     const updatedTotal = updatedSubtotal + updatedTax;
-    finalBillTotalValue = updatedTotal; // Re-cache absolute total sum[cite: 11]
+    finalBillTotalValue = updatedTotal; 
 
     const updatedPayload = {
         product_name: `${activeReceiptCache.itemsSummaryString} [Card Loyalty ${discountPercent}% Disc] [${activeReceiptCache.payMethod}]`.substring(0, 250),
@@ -420,7 +418,6 @@ applyLoyaltyBtn.addEventListener('click', async function() {
     }
 });
 
-// Trigger native OS local printing overlay configurations
 printReceiptBtn.addEventListener('click', () => {
     window.print();
 });
