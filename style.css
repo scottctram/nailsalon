@@ -74,7 +74,6 @@ header p {
     color: #0f172a;
 }
 
-/* Hide mobile-only bar on desktop */
 .mobile-action-bar {
     display: none;
 }
@@ -177,7 +176,7 @@ textarea.form-control {
 
 .calendar-header { 
     display: grid; 
-    grid-template-columns: 80px repeat(8, minmax(120px, 1fr)); 
+    grid-template-columns: 80px repeat(10, minmax(120px, 1fr)); 
     border-bottom: 2px solid #e2e8f0; 
     background-color: #f8fafc; 
     text-align: center; 
@@ -204,7 +203,6 @@ textarea.form-control {
     border-right: none; 
 }
 
-/* Main Matrix Scrolling Framework */
 .calendar-scroll-window { 
     height: 600px; 
     overflow-y: auto; 
@@ -213,14 +211,13 @@ textarea.form-control {
 }
 .calendar-body { 
     display: grid; 
-    grid-template-columns: 80px repeat(8, minmax(120px, 1fr));
+    grid-template-columns: 80px repeat(10, minmax(120px, 1fr));
     position: relative; 
     height: 720px; 
     background-image: linear-gradient(#e2e8f0 1px, transparent 1px); 
     background-size: 100% 60px; 
 }
 
-/* Timeline Label Configurations */
 .time-column { 
     display: flex; 
     flex-direction: column; 
@@ -242,7 +239,6 @@ textarea.form-control {
     box-sizing: border-box; 
 }
 
-/* Individual Staff Event Tracks */
 .staff-column { 
     position: relative; 
     height: 100%; 
@@ -253,7 +249,6 @@ textarea.form-control {
     border-right: none; 
 }
 
-/* Absolute Positioned Appointment Blocks */
 .appointment-block {
     position: absolute; 
     left: 4px; 
@@ -289,7 +284,6 @@ textarea.form-control {
     text-overflow: ellipsis;
 }
 
-/* Staff Blocking / Day-off Overlays */
 .btn-block-header {
     background-color: #f1f5f9;
     color: #475569;
@@ -348,7 +342,6 @@ textarea.form-control {
     transform: rotate(-5deg);
 }
 
-/* Modal Backdrop */
 .modal-backdrop {
     display: none;
     position: fixed;
@@ -359,7 +352,7 @@ textarea.form-control {
 }
 
 /* ==========================================================================
-   6. Mobile-Only Responsive Rules (Triggered only on screens ≤ 900px)
+   6. Mobile-Only Responsive Rules
    ========================================================================== */
 @media (max-width: 900px) {
     body {
@@ -376,7 +369,6 @@ textarea.form-control {
         grid-template-columns: 1fr;
     }
 
-    /* Show Mobile Navigation & Floating Controls */
     .mobile-action-bar {
         display: flex;
         margin-bottom: 16px;
@@ -417,7 +409,6 @@ textarea.form-control {
         border-color: #4F46E5;
     }
 
-    /* Transform Booking Form into a Popup Drawer on Mobile Only */
     .sidebar-panel {
         position: fixed;
         bottom: 0;
