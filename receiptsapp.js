@@ -213,6 +213,20 @@ function handleFormReset() {
     activeReceiptCache = null;
     finalBillTotalValue = 0;
     
+    // Reset Discount DOM Nodes specifically
+    const discountRow = document.getElementById('discountReceiptRow');
+    const discountLabel = document.getElementById('discountReceiptLabel');
+    const discountValue = document.getElementById('receiptDiscount');
+    
+    if (discountRow) discountRow.style.display = 'none';
+    if (discountLabel) discountLabel.textContent = 'DISCOUNT (0%):';
+    if (discountValue) discountValue.textContent = '-$0.00';
+
+    // Clear Cash Details Display
+    document.getElementById('receiptCashDetails').style.display = 'none';
+    document.getElementById('receiptTendered').innerText = '$0.00';
+    document.getElementById('receiptChange').innerText = '$0.00';
+
     receiptBox.style.display = 'none';
     loyaltyAdjustmentBox.style.display = 'none';
     receiptActionToolbar.style.display = 'none';
