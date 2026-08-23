@@ -439,16 +439,22 @@ header h1 {
         margin: 5px 0 !important;
     }
 
-    /* Clean side-by-side flex layout with gap buffer */
+    /* Clean side-by-side flex layout for visible rows */
     #receiptBox .receipt-row {
-        display: flex !important;
+        display: flex;
         justify-content: space-between !important;
         gap: 4px !important;
         margin: 3px 0 !important;
     }
 
+    /* Explicitly preserve hidden state for non-applicable items */
+    #receiptBox [style*="display: none"],
+    #receiptBox [style*="display:none"] {
+        display: none !important;
+    }
+
     /* Vertical stacking safety for cash details */
-    #receiptBox #receiptCashDetails {
+    #receiptBox #receiptCashDetails:not([style*="display: none"]) {
         display: block !important;
         margin-top: 5px !important;
         padding-top: 5px !important;
