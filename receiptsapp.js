@@ -84,6 +84,7 @@ const placeholderText = document.getElementById('placeholderText');
 // Payment & Loyalty Nodes
 const cashCalculatorGroup = document.getElementById('cashCalculatorGroup');
 const cashTenderedInput = document.getElementById('cashTendered');
+const liveChangeDueLabel = document.getElementById('changeDueLabel');
 const liveChangeDueDisplay = document.getElementById('liveChangeDue');
 const loyaltyAdjustmentBox = document.getElementById('loyaltyAdjustmentBox');
 const giftCardAmountInput = document.getElementById('giftCardAmount');
@@ -168,13 +169,33 @@ function calculateLiveTotals() {
 
     if (isCash) {
         const tendered = parseFloat(cashTenderedInput.value) || 0;
-        const changeDue = Math.max(0, tendered - currentActiveTotal);
-        liveChangeDueDisplay.textContent = `$${changeDue.toFixed(2)}`;
-        liveChangeDueDisplay.style.color = tendered >= currentActiveTotal ? '#16a34a' : '#dc2626';
+        const diff = tendered - currentActiveTotal;
+
+        if (diff >= 0) {
+            if (liveChangeDueLabel) liveChangeDueLabel.textContent = 'Change Due';
+            liveChangeDueDisplay.textContent = `$${diff.toFixed(2)}`;
+            liveChangeDueDisplay.style.color = '#16a34a';
+        } else {
+            const stillOwed = Math.abs(diff);
+            if (liveChangeDueLabel) liveChangeDueLabel.textContent = 'Still Owed';
+            liveChangeDueDisplay.textContent = `-$${stillOwed.toFixed(2)}`;
+            liveChangeDueDisplay.style.color = '#dc2626';
+        }
         
-        if(document.getElementById('receiptBox').style.display === 'block') {
+        if (document.getElementById('receiptBox').style.display === 'block') {
             document.getElementById('receiptTendered').innerText = `$${tendered.toFixed(2)}`;
-            document.getElementById('receiptChange').innerText = `$${changeDue.toFixed(2)}`;
+            const changeDisplayEl = document.getElementById('receiptChange');
+            const changeLabelEl = document.getElementById('receiptChangeLabel');
+
+            if (diff >= 0) {
+                changeDisplayEl.innerText = `$${diff.toFixed(2)}`;
+                changeDisplayEl.style.color = '#166534';
+                if (changeLabelEl) changeLabelEl.innerText = 'CHANGE RETURNED:';
+            } else {
+                changeDisplayEl.innerText = `-$${Math.abs(diff).toFixed(2)}`;
+                changeDisplayEl.style.color = '#dc2626';
+                if (changeLabelEl) changeLabelEl.innerText = 'STILL OWED:';
+            }
         }
     }
 }
@@ -235,13 +256,22 @@ function handleFormReset() {
     // Clear Cash Details Display
     document.getElementById('receiptCashDetails').style.display = 'none';
     document.getElementById('receiptTendered').innerText = '$0.00';
-    document.getElementById('receiptChange').innerText = '$0.00';
+    
+    const receiptChange = document.getElementById('receiptChange');
+    receiptChange.innerText = '$0.00';
+    receiptChange.style.color = '#166534';
+    
+    const receiptChangeLabel = document.getElementById('receiptChangeLabel');
+    if (receiptChangeLabel) receiptChangeLabel.innerText = 'CHANGE RETURNED:';
 
     receiptBox.style.display = 'none';
     loyaltyAdjustmentBox.style.display = 'none';
     receiptActionToolbar.style.display = 'none';
     placeholderText.style.display = 'block';
+
+    if (liveChangeDueLabel) liveChangeDueLabel.textContent = 'Change Due';
     liveChangeDueDisplay.textContent = '$0.00';
+    liveChangeDueDisplay.style.color = '#16a34a';
 }
 resetFormBtn.addEventListener('click', handleFormReset);
 
@@ -380,9 +410,20 @@ receiptForm.addEventListener('submit', async function(e) {
         const receiptCashDetails = document.getElementById('receiptCashDetails');
         if (payMethod === 'Cash') {
             const tendered = parseFloat(cashTenderedInput.value) || 0;
-            const change = Math.max(0, tendered - total);
+            const diff = tendered - total;
             document.getElementById('receiptTendered').innerText = `$${tendered.toFixed(2)}`;
-            document.getElementById('receiptChange').innerText = `$${change.toFixed(2)}`;
+            const changeDisplayEl = document.getElementById('receiptChange');
+            const changeLabelEl = document.getElementById('receiptChangeLabel');
+
+            if (diff >= 0) {
+                changeDisplayEl.innerText = `$${diff.toFixed(2)}`;
+                changeDisplayEl.style.color = '#166534';
+                if (changeLabelEl) changeLabelEl.innerText = 'CHANGE RETURNED:';
+            } else {
+                changeDisplayEl.innerText = `-$${Math.abs(diff).toFixed(2)}`;
+                changeDisplayEl.style.color = '#dc2626';
+                if (changeLabelEl) changeLabelEl.innerText = 'STILL OWED:';
+            }
             receiptCashDetails.style.display = 'block';
         } else { receiptCashDetails.style.display = 'none'; }
 
@@ -458,11 +499,27 @@ applyLoyaltyBtn.addEventListener('click', async function() {
         const receiptCashDetails = document.getElementById('receiptCashDetails');
         if (activeReceiptCache.payMethod === 'Cash') {
             const tendered = parseFloat(cashTenderedInput.value) || 0;
-            const updatedChange = Math.max(0, tendered - updatedTotal);
+            const diff = tendered - updatedTotal;
             document.getElementById('receiptTendered').innerText = `$${tendered.toFixed(2)}`;
-            document.getElementById('receiptChange').innerText = `$${updatedChange.toFixed(2)}`;
-            liveChangeDueDisplay.textContent = `$${updatedChange.toFixed(2)}`;
-            liveChangeDueDisplay.style.color = tendered >= updatedTotal ? '#16a34a' : '#dc2626';
+            const changeDisplayEl = document.getElementById('receiptChange');
+            const changeLabelEl = document.getElementById('receiptChangeLabel');
+
+            if (diff >= 0) {
+                changeDisplayEl.innerText = `$${diff.toFixed(2)}`;
+                changeDisplayEl.style.color = '#166534';
+                if (changeLabelEl) changeLabelEl.innerText = 'CHANGE RETURNED:';
+                if (liveChangeDueLabel) liveChangeDueLabel.textContent = 'Change Due';
+                liveChangeDueDisplay.textContent = `$${diff.toFixed(2)}`;
+                liveChangeDueDisplay.style.color = '#16a34a';
+            } else {
+                const stillOwed = Math.abs(diff);
+                changeDisplayEl.innerText = `-$${stillOwed.toFixed(2)}`;
+                changeDisplayEl.style.color = '#dc2626';
+                if (changeLabelEl) changeLabelEl.innerText = 'STILL OWED:';
+                if (liveChangeDueLabel) liveChangeDueLabel.textContent = 'Still Owed';
+                liveChangeDueDisplay.textContent = `-$${stillOwed.toFixed(2)}`;
+                liveChangeDueDisplay.style.color = '#dc2626';
+            }
         }
 
         applyLoyaltyBtn.textContent = 'Apply & Update Bill';
