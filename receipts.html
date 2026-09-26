@@ -61,12 +61,6 @@
                                 <input type="radio" name="paymentMethod" value="Cash" checked>
                                 <span class="toggle-label">💵 Cash</span>
                             </label>
-                          <!-- No more Card Option needed..
-                            <label class="toggle-option">
-                                <input type="radio" name="paymentMethod" value="Card">
-                                <span class="toggle-label">💳 Card</span>
-                            </label>
-                            -->
                         </div>
 
                         <div id="cashCalculatorGroup" style="display: block; margin-top: 16px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
@@ -76,7 +70,7 @@
                                     <input type="number" id="cashTendered" class="form-control" min="0" step="0.01" placeholder="0.00">
                                 </div>
                                 <div>
-                                    <label style="font-size: 0.85rem; color: #475569; font-weight: 500;">Change Due</label>
+                                    <label id="changeDueLabel" style="font-size: 0.85rem; color: #475569; font-weight: 500;">Change Due</label>
                                     <div id="liveChangeDue" style="font-size: 1.25rem; font-weight: bold; color: #16a34a; padding-top: 4px;">$0.00</div>
                                 </div>
                             </div>
@@ -169,7 +163,7 @@
                     
                     <div id="receiptCashDetails" style="display: none; font-size: 0.9em; margin-top: 8px; border-top: 1px dashed #000; padding-top: 8px;">
                         <div class="receipt-row" style="margin: 4px 0;"><span>CASH TENDERED:</span><span id="receiptTendered">$0.00</span></div>
-                        <div class="receipt-row" style="margin: 4px 0; font-weight: bold; color: #166534;"><span>CHANGE RETURNED:</span><span id="receiptChange">$0.00</span></div>
+                        <div class="receipt-row" style="margin: 4px 0; font-weight: bold;"><span id="receiptChangeLabel">CHANGE RETURNED:</span><span id="receiptChange">$0.00</span></div>
                     </div>
                 </div>
                 <p id="placeholderText" class="placeholder">Select treatments on the menu to construct a live invoice tracking block.</p>
