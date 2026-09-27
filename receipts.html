@@ -115,7 +115,7 @@
                 <div id="loyaltyAdjustmentBox" class="loyalty-modifier-card" style="display: none;">
                     <h4>🎟️ Apply Gift Card & Loyalty Reward</h4>
                     <p>Enter gift card payments or discount percentage before updating the invoice.</p>
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px;">
+                    <div style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; display: grid;">
                         <div>
                             <label for="giftCardAmount" style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Gift Card ($)</label>
                             <input type="number" id="giftCardAmount" class="form-control" min="0" step="0.01" placeholder="0.00">
@@ -151,7 +151,7 @@
                     <div class="receipt-row"><span>HST (13%):</span><span id="receiptTax">$0.00</span></div>
 
                     <div id="giftCardReceiptRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold;">
-                        <span>GIFT CARD:</span><span id="receiptGiftCard">-$0.00</span>
+                        <span>GIFT CARD REDEEMED:</span><span id="receiptGiftCard">-$0.00</span>
                     </div>
 
                     <div id="giftCardBalanceRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold;">
