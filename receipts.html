@@ -150,14 +150,6 @@
                     <div class="receipt-row"><span>SUBTOTAL:</span><span id="receiptSubtotal">$0.00</span></div>
                     <div class="receipt-row"><span>HST (13%):</span><span id="receiptTax">$0.00</span></div>
 
-                    <div id="giftCardReceiptRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold;">
-                        <span>GIFT CARD REDEEMED:</span><span id="receiptGiftCard">-$0.00</span>
-                    </div>
-
-                    <div id="giftCardBalanceRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold;">
-                        <span>GC REMAINING BALANCE:</span><span id="receiptGiftCardBalance">$0.00</span>
-                    </div>
-
                     <div id="discountReceiptRow" class="receipt-row" style="display: none; color: #dc2626; font-weight: bold;">
                         <span id="discountReceiptLabel">DISCOUNT:</span><span id="receiptDiscount">-$0.00</span>
                     </div>
@@ -165,6 +157,15 @@
                     <div class="divider"></div>
                     <div class="receipt-row total-row"><span>TOTAL:</span><span id="receiptTotal">$0.00</span></div>
                     
+                    <!-- GIFT CARD DETAILS MOVED HERE (BELOW TOTAL, ABOVE CASH TENDERED) -->
+                    <div id="giftCardReceiptRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold; border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 8px; margin-top: 8px;">
+                        <span>GIFT CARD REDEEMED:</span><span id="receiptGiftCard">-$0.00</span>
+                    </div>
+
+                    <div id="giftCardBalanceRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold;">
+                        <span>GC REMAINING BALANCE:</span><span id="receiptGiftCardBalance">$0.00</span>
+                    </div>
+
                     <div id="receiptCashDetails" style="display: none; font-size: 0.9em; margin-top: 8px; border-top: 1px dashed #000; padding-top: 8px;">
                         <div class="receipt-row" style="margin: 4px 0;"><span>CASH TENDERED:</span><span id="receiptTendered">$0.00</span></div>
                         <div class="receipt-row" style="margin: 4px 0; font-weight: bold;"><span id="receiptChangeLabel">CHANGE RETURNED:</span><span id="receiptChange">$0.00</span></div>
