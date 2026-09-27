@@ -497,7 +497,7 @@ applyLoyaltyBtn.addEventListener('click', async function() {
         const { error } = await supabaseClient.from('receipts').update(updatedPayload).eq('id', currentReceiptId);
         if (error) throw error;
 
-        // Display applied Gift Card amount
+        // Display applied Gift Card amount and Remaining Balance
         const giftCardRow = document.getElementById('giftCardReceiptRow');
         const giftCardBalanceRow = document.getElementById('giftCardBalanceRow');
         
@@ -505,7 +505,6 @@ applyLoyaltyBtn.addEventListener('click', async function() {
             document.getElementById('receiptGiftCard').textContent = `-$${appliedGiftCardDeduction.toFixed(2)}`;
             giftCardRow.style.display = 'flex';
             
-            // Display remaining Gift Card balance (even if $0.00, or when remaining > 0)
             if (remainingGiftCardBalance > 0) {
                 document.getElementById('receiptGiftCardBalance').textContent = `$${remainingGiftCardBalance.toFixed(2)}`;
                 giftCardBalanceRow.style.display = 'flex';
