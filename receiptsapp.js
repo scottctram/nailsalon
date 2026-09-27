@@ -461,14 +461,15 @@ applyLoyaltyBtn.addEventListener('click', async function() {
     if (discountPercent > 0 && baseWithTax < 15.00) {
         alert('Discounts cannot be applied to orders under $15.00.');
         loyaltyPercentInput.value = '';
+        discountPercent = 0;
         return;
     }
 
-    // Rule 2: Discount cannot exceed 20%
+    // Rule 2: Discount cannot exceed 20%, reset to 0 if exceeded
     if (discountPercent > 20) {
-        alert('Discount cannot exceed 20%. Value has been adjusted to 20%.');
-        discountPercent = 20;
-        loyaltyPercentInput.value = 20;
+        alert('Discount cannot exceed 20%. The discount has been reset to 0%.');
+        discountPercent = 0;
+        loyaltyPercentInput.value = '';
     }
 
     applyLoyaltyBtn.textContent = 'Updating...';
