@@ -441,7 +441,7 @@ header h1 {
 
     /* Clean side-by-side flex layout for visible rows */
     #receiptBox .receipt-row {
-        display: flex;
+        display: flex !important;
         justify-content: space-between !important;
         gap: 4px !important;
         margin: 3px 0 !important;
