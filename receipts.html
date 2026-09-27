@@ -114,15 +114,15 @@
                 
                 <div id="loyaltyAdjustmentBox" class="loyalty-modifier-card" style="display: none;">
                     <h4>🎟️ Apply Gift Card & Loyalty Reward</h4>
-                    <p>Enter gift card payments or discount percentage before updating the invoice.</p>
+                    <p>Enter gift card payments or discount percentage before updating the invoice. (Discounts require min. $15 order and max 20%).</p>
                     <div style="grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; display: grid;">
                         <div>
                             <label for="giftCardAmount" style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Gift Card ($)</label>
                             <input type="number" id="giftCardAmount" class="form-control" min="0" step="0.01" placeholder="0.00">
                         </div>
                         <div>
-                            <label for="loyaltyPercent" style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Discount Percentage (%)</label>
-                            <input type="number" id="loyaltyPercent" class="form-control" min="0" max="100" placeholder="0">
+                            <label for="loyaltyPercent" style="font-size: 0.8rem; font-weight: 600; color: #475569; display: block; margin-bottom: 4px;">Discount Percentage (Max 20%)</label>
+                            <input type="number" id="loyaltyPercent" class="form-control" min="0" max="20" placeholder="0">
                         </div>
                     </div>
                     <button type="button" id="applyLoyaltyBtn" class="btn-submit btn-normal" style="width: 100%; padding: 10px 20px;">Apply & Update Bill</button>
@@ -157,9 +157,9 @@
                     <div class="divider"></div>
                     <div class="receipt-row total-row"><span>TOTAL:</span><span id="receiptTotal">$0.00</span></div>
                     
-                    <!-- GIFT CARD DETAILS MOVED HERE (BELOW TOTAL, ABOVE CASH TENDERED) -->
+                    <!-- GIFT CARD DETAILS BELOW TOTAL -->
                     <div id="giftCardReceiptRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold; border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 8px; margin-top: 8px;">
-                        <span>GIFT CARD REDEEMED:</span><span id="receiptGiftCard">-$0.00</span>
+                        <span id="giftCardReceiptLabel">GIFT CARD REDEEMED:</span><span id="receiptGiftCard">-$0.00</span>
                     </div>
 
                     <div id="giftCardBalanceRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold;">
