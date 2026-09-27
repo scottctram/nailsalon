@@ -249,11 +249,13 @@ function handleFormReset() {
 
     // Reset Gift Card DOM Nodes
     const giftCardRow = document.getElementById('giftCardReceiptRow');
+    const giftCardLabel = document.getElementById('giftCardReceiptLabel');
     const giftCardValue = document.getElementById('receiptGiftCard');
     const giftCardBalanceRow = document.getElementById('giftCardBalanceRow');
     const giftCardBalance = document.getElementById('receiptGiftCardBalance');
     
     if (giftCardRow) giftCardRow.style.display = 'none';
+    if (giftCardLabel) giftCardLabel.textContent = 'GIFT CARD REDEEMED:';
     if (giftCardBalanceRow) giftCardBalanceRow.style.display = 'none';
     if (giftCardValue) giftCardValue.textContent = '-$0.00';
     if (giftCardBalance) giftCardBalance.textContent = '$0.00';
@@ -449,17 +451,30 @@ receiptForm.addEventListener('submit', async function(e) {
 applyLoyaltyBtn.addEventListener('click', async function() {
     if (!currentReceiptId || !activeReceiptCache) return;
 
+    const baseSubtotal = activeReceiptCache.subtotal;
+    const baseTax = activeReceiptCache.tax;
+    const baseWithTax = baseSubtotal + baseTax;
+
+    let discountPercent = parseFloat(loyaltyPercentInput.value) || 0;
+
+    // Rule 1: Discount blocked if total before discounts is less than $15
+    if (discountPercent > 0 && baseWithTax < 15.00) {
+        alert('Discounts cannot be applied to orders under $15.00.');
+        loyaltyPercentInput.value = '';
+        return;
+    }
+
+    // Rule 2: Discount cannot exceed 20%
+    if (discountPercent > 20) {
+        alert('Discount cannot exceed 20%. Value has been adjusted to 20%.');
+        discountPercent = 20;
+        loyaltyPercentInput.value = 20;
+    }
+
     applyLoyaltyBtn.textContent = 'Updating...';
     
     const giftCard = parseFloat(giftCardAmountInput.value) || 0;
-    const discountPercent = parseFloat(loyaltyPercentInput.value) || 0;
 
-    const baseSubtotal = activeReceiptCache.subtotal;
-    const baseTax = activeReceiptCache.tax;
-
-    // Total with Tax before deductions
-    const baseWithTax = baseSubtotal + baseTax;
-    
     // Amount deducted from the bill by the gift card cannot exceed the bill itself
     const appliedGiftCardDeduction = Math.min(baseWithTax, giftCard);
     
@@ -478,7 +493,7 @@ applyLoyaltyBtn.addEventListener('click', async function() {
     // Build item tracking string
     let adjustmentTags = [];
     if (giftCard > 0) {
-        adjustmentTags.push(`GC: -$${appliedGiftCardDeduction.toFixed(2)}`);
+        adjustmentTags.push(`GC ($${giftCard % 1 === 0 ? giftCard : giftCard.toFixed(2)}): -$${appliedGiftCardDeduction.toFixed(2)}`);
         if (remainingGiftCardBalance > 0) {
             adjustmentTags.push(`GC Rem: $${remainingGiftCardBalance.toFixed(2)}`);
         }
@@ -499,9 +514,14 @@ applyLoyaltyBtn.addEventListener('click', async function() {
 
         // Display applied Gift Card amount and Remaining Balance
         const giftCardRow = document.getElementById('giftCardReceiptRow');
+        const giftCardLabel = document.getElementById('giftCardReceiptLabel');
         const giftCardBalanceRow = document.getElementById('giftCardBalanceRow');
         
         if (giftCard > 0) {
+            const formattedInputGC = giftCard % 1 === 0 ? giftCard : giftCard.toFixed(2);
+            if (giftCardLabel) {
+                giftCardLabel.textContent = `GIFT CARD ($${formattedInputGC}) REDEEMED:`;
+            }
             document.getElementById('receiptGiftCard').textContent = `-$${appliedGiftCardDeduction.toFixed(2)}`;
             giftCardRow.style.display = 'flex';
             
