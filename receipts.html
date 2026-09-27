@@ -157,18 +157,21 @@
                     <div class="divider"></div>
                     <div class="receipt-row total-row"><span>TOTAL:</span><span id="receiptTotal">$0.00</span></div>
                     
-                    <!-- GIFT CARD DETAILS BELOW TOTAL -->
-                    <div id="giftCardReceiptRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold; border-top: 1px dashed rgba(0,0,0,0.15); padding-top: 8px; margin-top: 8px;">
-                        <span id="giftCardReceiptLabel">GIFT CARD REDEEMED:</span><span id="receiptGiftCard">-$0.00</span>
-                    </div>
+                    <!-- UNIFIED PAYMENT / TENDER SETTLEMENT SECTION -->
+                    <div id="receiptPaymentSection" style="display: none; font-size: 0.9em; margin-top: 10px; border-top: 1px dashed #000; padding-top: 8px;">
+                        
+                        <div id="giftCardReceiptRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold; margin: 4px 0;">
+                            <span id="giftCardReceiptLabel">GIFT CARD REDEEMED:</span><span id="receiptGiftCard">-$0.00</span>
+                        </div>
 
-                    <div id="giftCardBalanceRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold;">
-                        <span>GC REMAINING BALANCE:</span><span id="receiptGiftCardBalance">$0.00</span>
-                    </div>
+                        <div id="giftCardBalanceRow" class="receipt-row" style="display: none; color: #0284c7; font-weight: bold; margin: 4px 0;">
+                            <span>GC REMAINING BALANCE:</span><span id="receiptGiftCardBalance">$0.00</span>
+                        </div>
 
-                    <div id="receiptCashDetails" style="display: none; font-size: 0.9em; margin-top: 8px; border-top: 1px dashed #000; padding-top: 8px;">
-                        <div class="receipt-row" style="margin: 4px 0;"><span>CASH TENDERED:</span><span id="receiptTendered">$0.00</span></div>
-                        <div class="receipt-row" style="margin: 4px 0; font-weight: bold;"><span id="receiptChangeLabel">CHANGE RETURNED:</span><span id="receiptChange">$0.00</span></div>
+                        <div id="cashDetailsBlock" style="display: block;">
+                            <div class="receipt-row" style="margin: 4px 0;"><span>CASH TENDERED:</span><span id="receiptTendered">$0.00</span></div>
+                            <div class="receipt-row" style="margin: 4px 0; font-weight: bold;"><span id="receiptChangeLabel">CHANGE RETURNED:</span><span id="receiptChange">$0.00</span></div>
+                        </div>
                     </div>
                 </div>
                 <p id="placeholderText" class="placeholder">Select treatments on the menu to construct a live invoice tracking block.</p>
