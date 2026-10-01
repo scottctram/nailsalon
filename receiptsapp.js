@@ -69,8 +69,8 @@ const SALON_MENU = {
 let supabaseClient = null;
 let currentReceiptId = null; 
 let activeReceiptCache = null; 
-let finalBillTotalValue = 0; // True order bill total (post-discount, BEFORE gift card)
-let activeCashRequired = 0;   // Cash needed after subtracting gift card
+let finalBillTotalValue = 0; // True order bill total (Subtotal + HST)
+let activeCashRequired = 0;   // Cash needed after subtracting GC and discount
 
 // Document Nodes
 const receiptForm = document.getElementById('receiptForm');
@@ -166,7 +166,6 @@ function calculateLiveTotals() {
     const baseTax = baseSubtotal * HST_RATE;
     const baseTotal = baseSubtotal + baseTax;
 
-    const currentBillTotal = currentReceiptId ? finalBillTotalValue : baseTotal;
     const currentDue = currentReceiptId ? activeCashRequired : baseTotal;
 
     if (isCash) {
@@ -467,7 +466,7 @@ applyLoyaltyBtn.addEventListener('click', async function() {
 
     let discountPercent = parseFloat(loyaltyPercentInput.value) || 0;
 
-    // Rule 1: Discount blocked if order before discounts is less than $15
+    // Rule 1: Discount blocked if order total before discounts is less than $15
     if (discountPercent > 0 && baseWithTax < 15.00) {
         alert('Discounts cannot be applied to orders under $15.00.');
         loyaltyPercentInput.value = '';
@@ -486,28 +485,32 @@ applyLoyaltyBtn.addEventListener('click', async function() {
     
     const giftCard = parseFloat(giftCardAmountInput.value) || 0;
 
-    // 1. Discount is applied directly to the bill total
-    const discountDeduction = baseWithTax * (discountPercent / 100);
-    const invoiceTotal = Math.max(0, baseWithTax - discountDeduction);
-    
-    // TOTAL LINE DOES NOT GET REDUCED BY GIFT CARD
-    finalBillTotalValue = invoiceTotal; 
+    // 1. Gift card redemption against the order total
+    const appliedGiftCardDeduction = Math.min(baseWithTax, giftCard);
+    const remainingGiftCardBalance = Math.max(0, giftCard - baseWithTax);
 
-    // 2. Gift Card Settlement (handled in the payment area)
-    const appliedGiftCardDeduction = Math.min(invoiceTotal, giftCard);
-    const remainingGiftCardBalance = Math.max(0, giftCard - invoiceTotal);
+    // 2. Unpaid bill remaining after gift card application
+    const balanceAfterGC = Math.max(0, baseWithTax - giftCard);
 
-    // 3. Cash balance still required after Gift Card
-    activeCashRequired = Math.max(0, invoiceTotal - appliedGiftCardDeduction);
+    // 3. Discount applies ONLY to the remaining balance after the gift card
+    const discountDeduction = balanceAfterGC * (discountPercent / 100);
+
+    // 4. Net cash required after gift card and remaining-balance discount
+    activeCashRequired = Math.max(0, balanceAfterGC - discountDeduction);
+
+    // TOTAL line remains the total invoice value (order bill total)
+    finalBillTotalValue = baseWithTax;
 
     // Build tracking string
     let adjustmentTags = [];
-    if (discountPercent > 0) adjustmentTags.push(`Disc: ${discountPercent}%`);
     if (giftCard > 0) {
         adjustmentTags.push(`GC ($${giftCard % 1 === 0 ? giftCard : giftCard.toFixed(2)}): -$${appliedGiftCardDeduction.toFixed(2)}`);
         if (remainingGiftCardBalance > 0) {
             adjustmentTags.push(`GC Rem: $${remainingGiftCardBalance.toFixed(2)}`);
         }
+    }
+    if (discountPercent > 0) {
+        adjustmentTags.push(`Disc: ${discountPercent}% (-$${discountDeduction.toFixed(2)})`);
     }
     const tagSummary = adjustmentTags.length > 0 ? ` [${adjustmentTags.join(', ')}]` : '';
 
@@ -515,17 +518,17 @@ applyLoyaltyBtn.addEventListener('click', async function() {
         product_name: `${activeReceiptCache.itemsSummaryString}${tagSummary} [${activeReceiptCache.payMethod}]`.substring(0, 250),
         subtotal: baseSubtotal,
         tax: baseTax,
-        total: invoiceTotal // Order bill total
+        total: baseWithTax
     };
 
     try {
         const { error } = await supabaseClient.from('receipts').update(updatedPayload).eq('id', currentReceiptId);
         if (error) throw error;
 
-        // Display Discount Row
+        // Display Discount Row (in settlement / payment section)
         const discountRow = document.getElementById('discountReceiptRow');
-        if (discountPercent > 0) {
-            document.getElementById('discountReceiptLabel').textContent = `DISCOUNT (${discountPercent}%):`;
+        if (discountPercent > 0 && discountDeduction > 0) {
+            document.getElementById('discountReceiptLabel').textContent = `DISCOUNT (${discountPercent}% on Rem. Bal):`;
             document.getElementById('receiptDiscount').textContent = `-$${discountDeduction.toFixed(2)}`;
             discountRow.style.display = 'flex';
         } else {
@@ -533,8 +536,8 @@ applyLoyaltyBtn.addEventListener('click', async function() {
         }
 
         document.getElementById('receiptTax').textContent = `$${baseTax.toFixed(2)}`;
-        // Bill TOTAL reflects the price after discounts, unreduced by gift cards
-        document.getElementById('receiptTotal').textContent = `$${invoiceTotal.toFixed(2)}`;
+        // Bill TOTAL remains untouched by the gift card
+        document.getElementById('receiptTotal').textContent = `$${baseWithTax.toFixed(2)}`;
 
         // Payment Settlement Area: Gift Card Details
         const receiptPaymentSection = document.getElementById('receiptPaymentSection');
@@ -560,6 +563,10 @@ applyLoyaltyBtn.addEventListener('click', async function() {
         } else {
             giftCardRow.style.display = 'none';
             giftCardBalanceRow.style.display = 'none';
+        }
+
+        if (discountPercent > 0 && discountDeduction > 0) {
+            receiptPaymentSection.style.display = 'block';
         }
 
         // Payment Settlement Area: Cash Tendered & Change / Still Owed
